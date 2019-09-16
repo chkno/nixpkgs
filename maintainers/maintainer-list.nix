@@ -1171,6 +1171,12 @@
     githubId = 30435868;
     name = "Okina Matara";
   };
+  chkno = {
+    email = "chuck@intelligence.org";
+    github = "chkno";
+    githubId = 1118859;
+    name = "Scott Worley";
+  };
   choochootrain = {
     email = "hurshal@imap.cc";
     github = "choochootrain";
