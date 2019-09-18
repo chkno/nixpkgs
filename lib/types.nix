@@ -434,6 +434,7 @@ rec {
           else if all (x: t2.check x) defList
                then t2.merge loc defs
           else mergeOneOption loc defs;
+      getSubOptions = prefix: t1.getSubOptions prefix // t2.getSubOptions prefix;
       typeMerge = f':
         let mt1 = t1.typeMerge (elemAt f'.wrapped 0).functor;
             mt2 = t2.typeMerge (elemAt f'.wrapped 1).functor;
