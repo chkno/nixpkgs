@@ -36,6 +36,12 @@
      quirk in the boot menu.
     </para>
    </listitem>
+   <listitem>
+    <para>
+     <command>nixos-option</command> has been rewritten in C++ speeding it up and also adding
+     a <option>--all</option> option, printing all options and their values.
+    </para>
+   </listitem>
   </itemizedlist>
  </section>
 
