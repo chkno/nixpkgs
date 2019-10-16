@@ -27,6 +27,10 @@
    </arg>
 
    <arg>
+    <option>--large-set-threshold</option> <replaceable>N</replaceable>
+   </arg>
+
+   <arg>
     <replaceable>option.name</replaceable>
    </arg>
   </cmdsynopsis>
@@ -66,6 +70,16 @@
      <para>
       This option is passed to the underlying
       <command>nix-instantiate</command> invocation.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>
+     <option>--large-set-threshold</option> <replaceable>N</replaceable>
+    </term>
+    <listitem>
+     <para>
+      The attribute set size at which to summarize rather than print the contents of very large sets.  Defaults to 10,000.
      </para>
     </listitem>
    </varlistentry>

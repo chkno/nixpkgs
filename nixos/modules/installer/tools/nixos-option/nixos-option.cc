@@ -115,14 +115,15 @@ class Seen {
 // Stuff needed for evaluation
 struct Context
 {
-    Context(EvalState & state, Bindings & autoArgs, Value & optionsRoot, Value & configRoot)
+    Context(EvalState & state, Bindings & autoArgs, Value & optionsRoot, Value & configRoot, int largeSetThreshold)
         : state(state), autoArgs(autoArgs), optionsRoot(optionsRoot), configRoot(configRoot),
-          underscoreType(state.symbols.create("_type"))
+          largeSetThreshold(largeSetThreshold), underscoreType(state.symbols.create("_type"))
     {}
     EvalState & state;
     Bindings & autoArgs;
     Value & optionsRoot;
     Value & configRoot;
+    int largeSetThreshold;
     Symbol underscoreType;
     Seen seen;
 };
@@ -158,6 +159,14 @@ bool isOption(Context & ctx, const Value & v)
     }
 }
 
+bool isHugeAttrSet(const Context & ctx, const Value & v)
+{
+    if (v.type != tAttrs) {
+        return false;
+    }
+    return v.attrs->size() > ctx.largeSetThreshold;
+}
+
 // Add quotes to a component of a path.
 // These are needed for paths like:
 //    fileSystems."/".fsType
@@ -180,7 +189,7 @@ const std::string appendPath(const std::string & prefix, const std::string & suf
     return prefix + "." + quoteAttribute(suffix);
 }
 
-bool forbiddenRecursionName(std::string name) { return (!name.empty() && name[0] == '_') || name == "haskellPackages"; }
+bool forbiddenRecursionName(std::string name) { return (!name.empty() && name[0] == '_'); }
 
 void recurse(const std::function<bool(const std::string & path, ValueRefOrError)> & f, Context & ctx, Value & v,
              const std::string & path)
@@ -357,7 +366,7 @@ void mapConfigValuesInOption(const std::function<void(const std::string & path, 
     recurse(
         [f, ctx](const std::string & path, ValueRefOrError v) {
             bool leaf = std::holds_alternative<std::exception_ptr>(v) || std::get<ValueRef>(v).get().type != tAttrs ||
-                        ctx.state.isDerivation(std::get<ValueRef>(v));
+                        ctx.state.isDerivation(std::get<ValueRef>(v)) || isHugeAttrSet(ctx, std::get<ValueRef>(v));
             if (!leaf) {
                 return true; // Keep digging
             }
@@ -402,8 +411,15 @@ void printList(Context & ctx, Out & out, Value & v)
 
 void printAttrs(Context & ctx, Out & out, Value & v, const std::string & path)
 {
+    if (isHugeAttrSet(ctx, v)) {
+      out << "«set with " << v.attrs->size() << " attributes»";
+      return;
+    }
     Out attrsOut(out, "{", "}", v.attrs->size());
     for (const auto & a : v.attrs->lexicographicOrder()) {
+        if (forbiddenRecursionName(a->name)) {
+            continue;
+        }
         std::string name = a->name;
         if (!forbiddenRecursionName(name)) {
             attrsOut << name << " = ";
@@ -606,6 +622,7 @@ int main(int argc, char ** argv)
     std::string optionsExpr = "(import <nixpkgs/nixos> {}).options";
     std::string configExpr = "(import <nixpkgs/nixos> {}).config";
     std::vector<std::string> args;
+    int largeSetThreshold = 10000;
 
     struct MyArgs : nix::LegacyArgs, nix::MixEvalArgs
     {
@@ -619,6 +636,8 @@ int main(int argc, char ** argv)
             nix::printVersion("nixos-option");
         } else if (*arg == "-r" || *arg == "--recursive") {
             recursive = true;
+        } else if (*arg == "--large-set-threshold") {
+            largeSetThreshold = nix::getIntArg<int>(*arg, arg, end, false);
         } else if (*arg == "--path") {
             path = nix::getArg(*arg, arg, end);
         } else if (*arg == "--options_expr") {
@@ -644,7 +663,7 @@ int main(int argc, char ** argv)
     Value & optionsRoot = parseAndEval(*state, optionsExpr, path);
     Value & configRoot = parseAndEval(*state, configExpr, path);
 
-    Context ctx{*state, *myArgs.getAutoArgs(*state), optionsRoot, configRoot};
+    Context ctx{*state, *myArgs.getAutoArgs(*state), optionsRoot, configRoot, largeSetThreshold};
     Out out(std::cout);
 
     auto print = recursive ? printRecursive : printOne;
