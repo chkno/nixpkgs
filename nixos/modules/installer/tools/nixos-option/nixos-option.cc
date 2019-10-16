@@ -104,6 +104,14 @@ Out::Out(Out & o, const std::string & start, const std::string & end, LinePolicy
     *this << Out::sep;
 }
 
+class Seen {
+  public:
+    bool seenBefore(Value & v) { return !valuesSeen.insert(&v).second; }
+    void clear() { valuesSeen.clear(); }
+  private:
+    std::unordered_set<Value *> valuesSeen;
+};
+
 // Stuff needed for evaluation
 struct Context
 {
@@ -116,6 +124,7 @@ struct Context
     Value & optionsRoot;
     Value & configRoot;
     Symbol underscoreType;
+    Seen seen;
 };
 
 Value & evaluateValue(Context & ctx, Value & v)
@@ -294,6 +303,10 @@ void printList(Context & ctx, Out & out, Value & v)
 
 void printAttrs(Context & ctx, Out & out, Value & v, const std::string & path)
 {
+    if (ctx.seen.seenBefore(v)) {
+        out << "«repeated»";
+        return;
+    }
     Out attrsOut(out, "{", "}", v.attrs->size());
     for (const auto & a : v.attrs->lexicographicOrder()) {
         std::string name = a->name;
@@ -378,6 +391,7 @@ void printValue(Context & ctx, Out & out, ValueRefOrError maybeValue, const std:
 
 void printConfigValue(Context & ctx, Out & out, const std::string & path, ValueRefOrError v)
 {
+    ctx.seen.clear();
     out << path << " = ";
     printValue(ctx, out, std::move(v), path);
     out << ";\n";
