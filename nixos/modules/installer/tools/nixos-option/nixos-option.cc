@@ -44,7 +44,8 @@ using nix::tString;
 using nix::UsageError;
 using nix::Value;
 
-using ValueOrError = std::variant<Value, std::exception_ptr>;
+using ValueRef = std::reference_wrapper<Value>;
+using ValueRefOrError = std::variant<ValueRef, std::exception_ptr>;
 
 // An ostream wrapper to handle nested indentation
 class Out
@@ -106,24 +107,24 @@ Out::Out(Out & o, const std::string & start, const std::string & end, LinePolicy
 // Stuff needed for evaluation
 struct Context
 {
-    Context(EvalState & state, Bindings & autoArgs, Value optionsRoot, Value configRoot)
+    Context(EvalState & state, Bindings & autoArgs, Value & optionsRoot, Value & configRoot)
         : state(state), autoArgs(autoArgs), optionsRoot(optionsRoot), configRoot(configRoot),
           underscoreType(state.symbols.create("_type"))
     {}
     EvalState & state;
     Bindings & autoArgs;
-    Value optionsRoot;
-    Value configRoot;
+    Value & optionsRoot;
+    Value & configRoot;
     Symbol underscoreType;
 };
 
-Value evaluateValue(Context & ctx, Value & v)
+Value & evaluateValue(Context & ctx, Value & v)
 {
     ctx.state.forceValue(v);
     if (ctx.autoArgs.empty()) {
         return v;
     }
-    Value called{};
+    Value & called = *(new Value{});
     ctx.state.autoCallFunction(ctx.autoArgs, v, called);
     return called;
 }
@@ -138,7 +139,7 @@ bool isOption(Context & ctx, const Value & v)
         return false;
     }
     try {
-        Value evaluatedType = evaluateValue(ctx, *actualType->value);
+        Value & evaluatedType = evaluateValue(ctx, *actualType->value);
         if (evaluatedType.type != tString) {
             return false;
         }
@@ -172,22 +173,23 @@ const std::string appendPath(const std::string & prefix, const std::string & suf
 
 bool forbiddenRecursionName(std::string name) { return (!name.empty() && name[0] == '_') || name == "haskellPackages"; }
 
-void recurse(const std::function<bool(const std::string & path, ValueOrError)> & f, Context & ctx, Value v,
+void recurse(const std::function<bool(const std::string & path, ValueRefOrError)> & f, Context & ctx, Value & v,
              const std::string & path)
 {
-    ValueOrError evaluated;
-    try {
-        evaluated = evaluateValue(ctx, v);
-    } catch (Error &) {
-        evaluated = std::current_exception();
-    }
+    auto evaluated = [&ctx, &v]() -> ValueRefOrError {
+        try {
+            return evaluateValue(ctx, v);
+        } catch (Error &) {
+            return std::current_exception();
+        }
+    }();
     if (!f(path, evaluated)) {
         return;
     }
     if (std::holds_alternative<std::exception_ptr>(evaluated)) {
         return;
     }
-    const Value & evaluated_value = std::get<Value>(evaluated);
+    const Value & evaluated_value = std::get<ValueRef>(evaluated);
     if (evaluated_value.type != tAttrs) {
         return;
     }
@@ -206,7 +208,7 @@ bool optionTypeIs(Context & ctx, Value & v, const std::string & soughtType)
         if (typeLookup == v.attrs->end()) {
             return false;
         }
-        Value type = evaluateValue(ctx, *typeLookup->value);
+        Value & type = evaluateValue(ctx, *typeLookup->value);
         if (type.type != tAttrs) {
             return false;
         }
@@ -214,7 +216,7 @@ bool optionTypeIs(Context & ctx, Value & v, const std::string & soughtType)
         if (nameLookup == type.attrs->end()) {
             return false;
         }
-        Value name = evaluateValue(ctx, *nameLookup->value);
+        Value & name = evaluateValue(ctx, *nameLookup->value);
         if (name.type != tString) {
             return false;
         }
@@ -231,15 +233,16 @@ bool isAggregateOptionType(Context & ctx, Value & v)
 
 MakeError(OptionPathError, EvalError);
 
-Value getSubOptions(Context & ctx, Value & option)
+Value & getSubOptions(Context & ctx, Value & option)
 {
-    Value getSubOptions = evaluateValue(ctx, *findAlongAttrPath(ctx.state, "type.getSubOptions", ctx.autoArgs, option));
+    Value & getSubOptions =
+        evaluateValue(ctx, *findAlongAttrPath(ctx.state, "type.getSubOptions", ctx.autoArgs, option));
     if (getSubOptions.type != tLambda) {
         throw OptionPathError("Option's type.getSubOptions isn't a function");
     }
     Value emptyString{};
     nix::mkString(emptyString, "");
-    Value v;
+    Value & v = *(new Value{});
     ctx.state.callFunction(getSubOptions, emptyString, v, nix::Pos{});
     return v;
 }
@@ -248,13 +251,13 @@ Value getSubOptions(Context & ctx, Value & option)
 // an option value.
 struct FindAlongOptionPathRet
 {
-    Value option;
+    Value & option;
     std::string path;
 };
 FindAlongOptionPathRet findAlongOptionPath(Context & ctx, const std::string & path)
 {
     Strings tokens = parseAttrPath(path);
-    Value v = ctx.optionsRoot;
+    Value & v = ctx.optionsRoot;
     std::string processedPath;
     for (auto i = tokens.begin(); i != tokens.end(); i++) {
         const auto & attr = *i;
@@ -301,8 +304,8 @@ void mapOptions(const std::function<void(const std::string & path)> & f, Context
 {
     auto root = findAlongOptionPath(ctx, path);
     recurse(
-        [f, &ctx](const std::string & path, ValueOrError v) {
-            bool isOpt = std::holds_alternative<std::exception_ptr>(v) || isOption(ctx, std::get<Value>(v));
+        [f, &ctx](const std::string & path, ValueRefOrError v) {
+            bool isOpt = std::holds_alternative<std::exception_ptr>(v) || isOption(ctx, std::get<ValueRef>(v));
             if (isOpt) {
                 f(path);
             }
@@ -332,7 +335,7 @@ void mapOptions(const std::function<void(const std::string & path)> & f, Context
 //   users.users.nixbld1 = ... .. ...
 //   ...
 //   users.users.systemd-timesync = ... .. ...
-void mapConfigValuesInOption(const std::function<void(const std::string & path, ValueOrError v)> & f,
+void mapConfigValuesInOption(const std::function<void(const std::string & path, ValueRefOrError v)> & f,
                              const std::string & path, Context & ctx)
 {
     Value * option;
@@ -343,9 +346,9 @@ void mapConfigValuesInOption(const std::function<void(const std::string & path, 
         return;
     }
     recurse(
-        [f, ctx](const std::string & path, ValueOrError v) {
-            bool leaf = std::holds_alternative<std::exception_ptr>(v) || std::get<Value>(v).type != tAttrs ||
-                        ctx.state.isDerivation(std::get<Value>(v));
+        [f, ctx](const std::string & path, ValueRefOrError v) {
+            bool leaf = std::holds_alternative<std::exception_ptr>(v) || std::get<ValueRef>(v).get().type != tAttrs ||
+                        ctx.state.isDerivation(std::get<ValueRef>(v));
             if (!leaf) {
                 return true; // Keep digging
             }
@@ -357,7 +360,7 @@ void mapConfigValuesInOption(const std::function<void(const std::string & path, 
 
 std::string describeError(const Error & e) { return "«error: " + e.msg() + "»"; }
 
-void describeDerivation(Context & ctx, Out & out, Value v)
+void describeDerivation(Context & ctx, Out & out, Value & v)
 {
     // Copy-pasted from nix/src/nix/repl.cc  :(
     Bindings::iterator i = v.attrs->find(ctx.state.sDrvPath);
@@ -370,14 +373,14 @@ void describeDerivation(Context & ctx, Out & out, Value v)
     }
 }
 
-Value parseAndEval(EvalState & state, const std::string & expression, const std::string & path)
+Value & parseAndEval(EvalState & state, const std::string & expression, const std::string & path)
 {
-    Value v{};
+    Value & v = *(new Value{});
     state.eval(state.parseExprFromString(expression, absPath(path)), v);
     return v;
 }
 
-void printValue(Context & ctx, Out & out, ValueOrError maybeValue, const std::string & path);
+void printValue(Context & ctx, Out & out, ValueRefOrError maybeValue, const std::string & path);
 
 void printList(Context & ctx, Out & out, Value & v)
 {
@@ -437,13 +440,13 @@ void printMultiLineString(Out & out, const Value & v)
     }
 }
 
-void printValue(Context & ctx, Out & out, ValueOrError maybeValue, const std::string & path)
+void printValue(Context & ctx, Out & out, ValueRefOrError maybeValue, const std::string & path)
 {
     try {
         if (auto ex = std::get_if<std::exception_ptr>(&maybeValue)) {
             std::rethrow_exception(*ex);
         }
-        Value v = evaluateValue(ctx, std::get<Value>(maybeValue));
+        Value & v = evaluateValue(ctx, std::get<ValueRef>(maybeValue));
         if (ctx.state.isDerivation(v)) {
             describeDerivation(ctx, out, v);
         } else if (v.isList()) {
@@ -474,7 +477,7 @@ void printValue(Context & ctx, Out & out, ValueOrError maybeValue, const std::st
     }
 }
 
-void printConfigValue(Context & ctx, Out & out, const std::string & path, ValueOrError v)
+void printConfigValue(Context & ctx, Out & out, const std::string & path, ValueRefOrError v)
 {
     out << path << " = ";
     printValue(ctx, out, std::move(v), path);
@@ -493,7 +496,7 @@ void printRecursive(Context & ctx, Out & out, const std::string & path)
     mapOptions(
         [&ctx, &out, &path](const std::string & optionPath) {
             mapConfigValuesInOption(
-                [&ctx, &out, &path](const std::string & configPath, ValueOrError v) {
+                [&ctx, &out, &path](const std::string & configPath, ValueRefOrError v) {
                     if (starts_with(configPath, path)) {
                         printConfigValue(ctx, out, configPath, v);
                     }
@@ -624,8 +627,8 @@ int main(int argc, char ** argv)
     auto store = nix::openStore();
     auto state = std::make_unique<EvalState>(myArgs.searchPath, store);
 
-    Value optionsRoot = parseAndEval(*state, optionsExpr, path);
-    Value configRoot = parseAndEval(*state, configExpr, path);
+    Value & optionsRoot = parseAndEval(*state, optionsExpr, path);
+    Value & configRoot = parseAndEval(*state, configExpr, path);
 
     Context ctx{*state, *myArgs.getAutoArgs(*state), optionsRoot, configRoot};
     Out out(std::cout);
