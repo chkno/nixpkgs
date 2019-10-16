@@ -44,6 +44,8 @@ using nix::tString;
 using nix::UsageError;
 using nix::Value;
 
+using ValueOrError = std::variant<Value, std::exception_ptr>;
+
 // An ostream wrapper to handle nested indentation
 class Out
 {
@@ -170,10 +172,10 @@ const std::string appendPath(const std::string & prefix, const std::string & suf
 
 bool forbiddenRecursionName(std::string name) { return (!name.empty() && name[0] == '_') || name == "haskellPackages"; }
 
-void recurse(const std::function<bool(const std::string & path, std::variant<Value, std::exception_ptr>)> & f,
-             Context & ctx, Value v, const std::string & path)
+void recurse(const std::function<bool(const std::string & path, ValueOrError)> & f, Context & ctx, Value v,
+             const std::string & path)
 {
-    std::variant<Value, std::exception_ptr> evaluated;
+    ValueOrError evaluated;
     try {
         evaluated = evaluateValue(ctx, v);
     } catch (Error &) {
@@ -201,7 +203,7 @@ void recurse(const std::function<bool(const std::string & path, std::variant<Val
 void mapOptions(const std::function<void(const std::string & path)> & f, Context & ctx, Value root)
 {
     recurse(
-        [f, &ctx](const std::string & path, std::variant<Value, std::exception_ptr> v) {
+        [f, &ctx](const std::string & path, ValueOrError v) {
             bool isOpt = std::holds_alternative<std::exception_ptr>(v) || isOption(ctx, std::get<Value>(v));
             if (isOpt) {
                 f(path);
@@ -232,9 +234,8 @@ void mapOptions(const std::function<void(const std::string & path)> & f, Context
 //   users.users.nixbld1 = ... .. ...
 //   ...
 //   users.users.systemd-timesync = ... .. ...
-void mapConfigValuesInOption(
-    const std::function<void(const std::string & path, std::variant<Value, std::exception_ptr> v)> & f,
-    const std::string & path, Context & ctx)
+void mapConfigValuesInOption(const std::function<void(const std::string & path, ValueOrError v)> & f,
+                             const std::string & path, Context & ctx)
 {
     Value * option;
     try {
@@ -244,7 +245,7 @@ void mapConfigValuesInOption(
         return;
     }
     recurse(
-        [f, ctx](const std::string & path, std::variant<Value, std::exception_ptr> v) {
+        [f, ctx](const std::string & path, ValueOrError v) {
             bool leaf = std::holds_alternative<std::exception_ptr>(v) || std::get<Value>(v).type != tAttrs ||
                         ctx.state.isDerivation(std::get<Value>(v));
             if (!leaf) {
@@ -278,7 +279,7 @@ Value parseAndEval(EvalState & state, const std::string & expression, const std:
     return v;
 }
 
-void printValue(Context & ctx, Out & out, std::variant<Value, std::exception_ptr> maybeValue, const std::string & path);
+void printValue(Context & ctx, Out & out, ValueOrError maybeValue, const std::string & path);
 
 void printList(Context & ctx, Out & out, Value & v)
 {
@@ -336,7 +337,7 @@ void printMultiLineString(Out & out, const Value & v)
     }
 }
 
-void printValue(Context & ctx, Out & out, std::variant<Value, std::exception_ptr> maybeValue, const std::string & path)
+void printValue(Context & ctx, Out & out, ValueOrError maybeValue, const std::string & path)
 {
     try {
         if (auto ex = std::get_if<std::exception_ptr>(&maybeValue)) {
@@ -373,7 +374,7 @@ void printValue(Context & ctx, Out & out, std::variant<Value, std::exception_ptr
     }
 }
 
-void printConfigValue(Context & ctx, Out & out, const std::string & path, std::variant<Value, std::exception_ptr> v)
+void printConfigValue(Context & ctx, Out & out, const std::string & path, ValueOrError v)
 {
     out << path << " = ";
     printValue(ctx, out, std::move(v), path);
@@ -384,11 +385,9 @@ void printAll(Context & ctx, Out & out)
 {
     mapOptions(
         [&ctx, &out](const std::string & optionPath) {
-            mapConfigValuesInOption(
-                [&ctx, &out](const std::string & configPath, std::variant<Value, std::exception_ptr> v) {
-                    printConfigValue(ctx, out, configPath, v);
-                },
-                optionPath, ctx);
+            mapConfigValuesInOption([&ctx, &out](const std::string & configPath,
+                                                 ValueOrError v) { printConfigValue(ctx, out, configPath, v); },
+                                    optionPath, ctx);
         },
         ctx, ctx.optionsRoot);
 }
