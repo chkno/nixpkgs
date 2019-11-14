@@ -1,3 +1,4 @@
+
 diff --git a/servant-client-core.cabal b/servant-client-core.cabal
 index 5789da601..3faf65bb4 100644
 --- a/servant-client-core.cabal
