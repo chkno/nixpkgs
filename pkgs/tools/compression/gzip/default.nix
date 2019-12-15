@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, xz }:
+{ stdenv, fetchurl, xz, makeWrapper }:
 
 stdenv.mkDerivation rec {
   pname = "gzip";
@@ -13,9 +13,17 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  nativeBuildInputs = [ xz.bin ];
+  nativeBuildInputs = [ xz.bin makeWrapper ];
 
   makeFlags = [ "SHELL=/bin/sh" "GREP=grep" ];
+
+  # Many gzip executables are shell scripts that depend upon other gzip
+  # executables being in $PATH.
+  preFixup = ''
+    for f in $out/bin/*; do
+      wrapProgram "$f" --prefix PATH : "$out/bin"
+    done
+  '';
 
   meta = {
     homepage = https://www.gnu.org/software/gzip/;
