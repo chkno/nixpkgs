@@ -8,10 +8,27 @@ in {
     services.xserver.xidlehook = {
       enable = mkEnableOption "xidlehook";
       timers = mkOption {
-        default = [{
-          duration = 20 * 60;
-          command = "${pkgs.xlockmore}/bin/xlock";
-        }];
+        description = ''
+          List of timers.
+
+          Most other xidlehook options adjust the default value of this option;
+          if this option is set directly, most other xidlehook options have no effect.
+          This is done to maintain drop-in compatibility with the xautolock module
+          for folks that already have xautolock set up the way they like it.
+          If you don't have an existing xautolock config, you may prefer the
+          simplicity of xidlehook's one-list-of-timers interface.
+       '';
+        default =
+          (optional cfg.enableNotifier {
+            duration = cfg.time * 60 - cfg.notify;
+            command = cfg.notifier;
+          }) ++ [{
+            duration = if cfg.enableNotifier then cfg.notify else cfg.time * 60;
+            command = cfg.locker;
+          }] ++ (optional (cfg.killer != null) {
+            duration = (cfg.killtime - cfg.time) * 60;
+            command = cfg.killer;
+          });
         example = [
           # This is upstream's example: Dim the screen after 60 seconds, undim if user becomes active
           {
@@ -74,6 +91,93 @@ in {
           <command>xidlehook</command>.
         '';
       };
+
+
+      # Options for drop-in compatibility with xautolock
+
+      enableNotifier = mkEnableOption "xidlehook.notify" // {
+        description = ''
+          This publishes a notification before the autolock.
+
+          This option is for xautolock-configuration compatibility & has no effect if
+          services.xserver.xidlehook.timers is set directly.
+        '';
+      };
+
+      time = mkOption {
+        default = 15;
+        type = types.int;
+
+        description = ''
+          Idle time (in minutes) to wait until xidlehook locks the computer.
+
+          This option is for xautolock-configuration compatibility & has no effect if
+          services.xserver.xidlehook.timers is set directly.
+        '';
+      };
+
+      locker = mkOption {
+        default = "${pkgs.xlockmore}/bin/xlock"; # default according to `man xautolock`
+        example = "${pkgs.i3lock}/bin/i3lock -i /path/to/img";
+        type = types.str;
+
+        description = ''
+          The script to use when automatically locking the computer.
+
+          This option is for xautolock-configuration compatibility & has no effect if
+          services.xserver.xidlehook.timers is set directly.
+        '';
+      };
+
+      notify = mkOption {
+        default = 10;
+        type = types.int;
+
+        description = ''
+          Time (in seconds) before the actual lock when the notification about the pending lock should be published.
+
+          This option is for xautolock-configuration compatibility & has no effect if
+          services.xserver.xidlehook.timers is set directly.
+        '';
+      };
+
+      notifier = mkOption {
+        default = null;
+        example = "${pkgs.libnotify}/bin/notify-send \"Locking in ${cfg.notify} seconds\"";
+        type = types.nullOr types.str;
+
+        description = ''
+          Notification script to be used to warn about the pending autolock.
+
+          This option is for xautolock-configuration compatibility & has no effect if
+          services.xserver.xidlehook.timers is set directly.
+        '';
+      };
+
+      killer = mkOption {
+        default = null; # default according to `man xautolock` is none
+        example = "${pkgs.systemd}/bin/systemctl suspend";
+        type = types.nullOr types.str;
+
+        description = ''
+          The script to use when nothing has happend for as long as <option>killtime</option>
+
+          This option is for xautolock-configuration compatibility & has no effect if
+          services.xserver.xidlehook.timers is set directly.
+        '';
+      };
+
+      killtime = mkOption {
+        default = 20; # default according to `man xautolock`
+        type = types.int;
+
+        description = ''
+          Minutes xidlehook waits until it executes the script specified in <option>killer</option>
+
+          This option is for xautolock-configuration compatibility & has no effect if
+          services.xserver.xidlehook.timers is set directly.
+        '';
+      };
     };
   };
 
@@ -101,6 +205,14 @@ in {
     }) cfg.timers) ++ (map (timer: {
       assertion = (timer.canceller or "") != "" -> builtins.substring 0 1 timer.command == "/";
       message = "Please specify canonical paths for `services.xserver.xidlehook.timers` cancellers";
-    }) cfg.timers);
+    }) cfg.timers) ++ [{
+      assertion = cfg.enableNotifier -> cfg.notifier != null;
+      message = "When enabling the notifier for xidlehook, you also need to specify the notify script";
+    }] ++ (lib.forEach [ "locker" "notifier" "killer" ]
+      (option: {
+        assertion = cfg.${option} != null -> builtins.substring 0 1 cfg.${option} == "/";
+        message = "Please specify a canonical path for `services.xserver.xidlehook.${option}`";
+      })
+    );
   };
 }
