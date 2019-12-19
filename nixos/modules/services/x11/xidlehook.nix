@@ -56,6 +56,10 @@ in {
             '';
           }
         ];
+        # We use uniq here because conflicting definitions of the list of timers should
+        # be brought to the attention of the user.  Just appending one to the other
+        # usually would not make sense and definitely should not be done implicitly and
+        # silently.
         type = types.uniq (types.listOf (types.submodule {
           options = {
             duration = mkOption {
