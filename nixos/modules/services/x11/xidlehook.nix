@@ -18,17 +18,6 @@ in {
           If you don't have an existing xautolock config, you may prefer the
           simplicity of xidlehook's one-list-of-timers interface.
        '';
-        default =
-          (optional cfg.enableNotifier {
-            duration = cfg.time * 60 - cfg.notify;
-            command = cfg.notifier;
-          }) ++ [{
-            duration = if cfg.enableNotifier then cfg.notify else cfg.time * 60;
-            command = cfg.locker;
-          }] ++ (optional (cfg.killer != null) {
-            duration = (cfg.killtime - cfg.time) * 60;
-            command = cfg.killer;
-          });
         example = [
           # This is upstream's example: Dim the screen after 60 seconds, undim if user becomes active
           {
@@ -185,9 +174,22 @@ in {
     };
   };
 
-  config = mkIf cfg.enable {
-    environment.systemPackages = with pkgs; [ xidlehook ];
-    systemd.user.services.xidlehook = {
+  config = {
+    services.xserver.xidlehook.timers = mkDefault (
+      (optional cfg.enableNotifier {
+        duration = cfg.time * 60 - cfg.notify;
+        command = cfg.notifier;
+      }) ++ [{
+        duration = if cfg.enableNotifier then cfg.notify else cfg.time * 60;
+        command = cfg.locker;
+      }] ++ (optional (cfg.killer != null) {
+        duration = (cfg.killtime - cfg.time) * 60;
+        command = cfg.killer;
+      }));
+
+    environment.systemPackages = optional cfg.enable pkgs.xidlehook;
+
+    systemd.user.services.xidlehook = mkIf cfg.enable {
       description = "xidlehook service";
       wantedBy = [ "graphical-session.target" ];
       partOf = [ "graphical-session.target" ];
@@ -203,7 +205,8 @@ in {
         Restart = "always";
       };
     };
-    assertions = (map (timer: {
+
+    assertions = optionals cfg.enable (map (timer: {
       assertion = builtins.substring 0 1 timer.command == "/";
       message = "Please specify canonical paths for `services.xserver.xidlehook.timers` commands";
     }) cfg.timers) ++ (map (timer: {
