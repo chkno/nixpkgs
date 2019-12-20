@@ -92,7 +92,7 @@ in {
         description = ''
           This publishes a notification before the autolock.
 
-          This option is for xautolock-configuration compatibility & has no effect if
+          This option is for xautolock-configuration compatibility and has no effect if
           services.xserver.xidlehook.timers is set directly.
         '';
       };
@@ -104,7 +104,7 @@ in {
         description = ''
           Idle time (in minutes) to wait until xidlehook locks the computer.
 
-          This option is for xautolock-configuration compatibility & has no effect if
+          This option is for xautolock-configuration compatibility and has no effect if
           services.xserver.xidlehook.timers is set directly.
         '';
       };
@@ -117,7 +117,7 @@ in {
         description = ''
           The script to use when automatically locking the computer.
 
-          This option is for xautolock-configuration compatibility & has no effect if
+          This option is for xautolock-configuration compatibility and has no effect if
           services.xserver.xidlehook.timers is set directly.
         '';
       };
@@ -129,20 +129,20 @@ in {
         description = ''
           Time (in seconds) before the actual lock when the notification about the pending lock should be published.
 
-          This option is for xautolock-configuration compatibility & has no effect if
+          This option is for xautolock-configuration compatibility and has no effect if
           services.xserver.xidlehook.timers is set directly.
         '';
       };
 
       notifier = mkOption {
         default = null;
-        example = "${pkgs.libnotify}/bin/notify-send \"Locking in ${cfg.notify} seconds\"";
+        example = "${pkgs.libnotify}/bin/notify-send \"Locking in ${toString cfg.notify} seconds\"";
         type = types.nullOr types.str;
 
         description = ''
           Notification script to be used to warn about the pending autolock.
 
-          This option is for xautolock-configuration compatibility & has no effect if
+          This option is for xautolock-configuration compatibility and has no effect if
           services.xserver.xidlehook.timers is set directly.
         '';
       };
@@ -155,7 +155,7 @@ in {
         description = ''
           The script to use when nothing has happend for as long as <option>killtime</option>
 
-          This option is for xautolock-configuration compatibility & has no effect if
+          This option is for xautolock-configuration compatibility and has no effect if
           services.xserver.xidlehook.timers is set directly.
         '';
       };
@@ -167,7 +167,7 @@ in {
         description = ''
           Minutes xidlehook waits until it executes the script specified in <option>killer</option>
 
-          This option is for xautolock-configuration compatibility & has no effect if
+          This option is for xautolock-configuration compatibility and has no effect if
           services.xserver.xidlehook.timers is set directly.
         '';
       };
