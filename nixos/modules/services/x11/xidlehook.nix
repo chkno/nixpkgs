@@ -212,7 +212,7 @@ in {
       assertion = builtins.substring 0 1 timer.command == "/";
       message = "Please specify canonical paths for `services.xserver.xidlehook.timers` commands";
     }) cfg.timers) ++ (map (timer: {
-      assertion = (timer.canceller or "") != "" -> builtins.substring 0 1 timer.command == "/";
+      assertion = (timer.canceller or "") != "" -> builtins.substring 0 1 timer.canceller == "/";
       message = "Please specify canonical paths for `services.xserver.xidlehook.timers` cancellers";
     }) cfg.timers) ++ [{
       assertion = cfg.enableNotifier -> cfg.notifier != null;
