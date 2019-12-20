@@ -18,33 +18,35 @@ in {
           If you don't have an existing xautolock config, you may prefer the
           simplicity of xidlehook's one-list-of-timers interface.
        '';
-        example = [
-          # This is upstream's example: Dim the screen after 60 seconds, undim if user becomes active
-          {
-            duration = 60;
-            command = ''
-              ${pkgs.xorg.xrandr}/bin/xrandr --output "$(${pkgs.xorg.xrandr}/bin/xrandr | ${pkgs.gawk}/bin/awk '/primary/ { print $1 }')" --brightness .1
-            '';
-            canceller = ''
-              ${pkgs.xorg.xrandr}/bin/xrandr --output "$(${pkgs.xorg.xrandr}/bin/xrandr | ${pkgs.gawk}/bin/awk '/primary/ { print $1 }')" --brightness 1
-            '';
-          }
-          # Undim & lock after 10 more seconds
-          {
-            duration = 10;
-            command = ''
-              ${pkgs.xorg.xrandr}/bin/xrandr --output "$(${pkgs.xorg.xrandr}/bin/xrandr | ${pkgs.gawk}/bin/awk '/primary/ { print $1 }')" --brightness 1
-              ${pkgs.i3lock}/bin/i3lock
-            '';
-          }
-          # Finally, suspend an hour after it locks
-          {
-            duration = 3600;
-            command = ''
-              ${pkgs.systemd}/bin/systemctl suspend
-            '';
-          }
-        ];
+       # This is upstream's example: Dim the screen after 60 seconds, undim if user becomes active
+       example = literalExample ''
+          [
+            {
+              duration = 60;
+              command = '''
+                ''${pkgs.xorg.xrandr}/bin/xrandr --output "$(''${pkgs.xorg.xrandr}/bin/xrandr | ''${pkgs.gawk}/bin/awk '/primary/ { print $1 }')" --brightness .1
+              ''';
+              canceller = '''
+                ''${pkgs.xorg.xrandr}/bin/xrandr --output "$(''${pkgs.xorg.xrandr}/bin/xrandr | ''${pkgs.gawk}/bin/awk '/primary/ { print $1 }')" --brightness 1
+              ''';
+            }
+            # Undim & lock after 10 more seconds
+            {
+              duration = 10;
+              command = '''
+                ''${pkgs.xorg.xrandr}/bin/xrandr --output "$(''${pkgs.xorg.xrandr}/bin/xrandr | ''${pkgs.gawk}/bin/awk '/primary/ { print $1 }')" --brightness 1
+                ''${pkgs.i3lock}/bin/i3lock
+              ''';
+            }
+            # Finally, suspend an hour after it locks
+            {
+              duration = 3600;
+              command = '''
+                ''${pkgs.systemd}/bin/systemctl suspend
+              ''';
+            }
+          ];
+        '';
         # We use uniq here because conflicting definitions of the list of timers should
         # be brought to the attention of the user.  Just appending one to the other
         # usually would not make sense and definitely should not be done implicitly and
