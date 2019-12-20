@@ -80,7 +80,9 @@ in {
       extraOptions = mkOption {
         type = types.listOf types.str;
         default = [ ];
-        example = [ "--socket" "\${XDG_RUNTIME_DIR}/xidlehook.socket" "--not-when-fullscreen" "--not-when-audio" ];
+        example = literalExample ''
+          [ "--socket" "\''${XDG_RUNTIME_DIR}/xidlehook.socket" "--not-when-fullscreen" "--not-when-audio" ]
+        '';
         description = ''
           Additional command-line arguments to pass to
           <command>xidlehook</command>.
@@ -113,7 +115,9 @@ in {
 
       locker = mkOption {
         default = "${pkgs.xlockmore}/bin/xlock"; # default according to `man xautolock`
-        example = "${pkgs.i3lock}/bin/i3lock -i /path/to/img";
+        example = literalExample ''
+          "''${pkgs.i3lock}/bin/i3lock -i /path/to/img"
+        '';
         type = types.str;
 
         description = ''
@@ -138,7 +142,9 @@ in {
 
       notifier = mkOption {
         default = null;
-        example = "${pkgs.libnotify}/bin/notify-send \"Locking in ${toString cfg.notify} seconds\"";
+        example = literalExample ''
+          "''${pkgs.libnotify}/bin/notify-send \"Locking in ''${toString cfg.notify} seconds\""
+        '';
         type = types.nullOr types.str;
 
         description = ''
@@ -151,7 +157,9 @@ in {
 
       killer = mkOption {
         default = null; # default according to `man xautolock` is none
-        example = "${pkgs.systemd}/bin/systemctl suspend";
+        example = literalExample ''
+          "''${pkgs.systemd}/bin/systemctl suspend"
+        '';
         type = types.nullOr types.str;
 
         description = ''
