@@ -24,6 +24,6 @@ agda.mkDerivation (rec {
     description = "Agda standard library developed at Iowa";
     license = stdenv.lib.licenses.free;
     platforms = stdenv.lib.platforms.unix;
-    maintainers = with stdenv.lib.maintainers; [ ];
+    maintainers = with stdenv.lib.maintainers; [ alexarice ];
   };
 })

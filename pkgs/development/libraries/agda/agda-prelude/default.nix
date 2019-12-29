@@ -18,6 +18,6 @@ agda.mkDerivation rec {
     description = "Programming library for Agda";
     license = stdenv.lib.licenses.mit;
     platforms = stdenv.lib.platforms.unix;
-    maintainers = with maintainers; [ mudri ];
+    maintainers = with maintainers; [ mudri alexarice ];
   };
 }
