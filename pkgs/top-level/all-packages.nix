@@ -14853,18 +14853,8 @@ in
 
   ### DEVELOPMENT / LIBRARIES / AGDA
 
-  agda = callPackage ../build-support/agda {
+  agda = callPackage ./agda-packages.nix {
     inherit (haskellPackages) Agda;
-  };
-
-  agdaIowaStdlib = callPackage ../development/libraries/agda/agda-iowa-stdlib {
-    inherit (haskellPackages) Agda;
-  };
-
-  agdaPrelude = callPackage ../development/libraries/agda/agda-prelude { };
-
-  AgdaStdlib = callPackage ../development/libraries/agda/agda-stdlib {
-    inherit (haskellPackages) ghcWithPackages;
   };
 
   ### DEVELOPMENT / LIBRARIES / JAVA

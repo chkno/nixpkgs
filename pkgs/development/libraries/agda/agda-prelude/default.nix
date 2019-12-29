@@ -1,6 +1,6 @@
-{ stdenv, agda, fetchFromGitHub }:
+{ stdenv, mkDerivation, fetchFromGitHub }:
 
-agda.mkDerivation rec {
+mkDerivation rec {
   version = "eacc961c2c312b7443109a7872f99d55557df317";
   pname = "agda-prelude";
 

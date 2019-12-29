@@ -1,10 +1,8 @@
-{ stdenv, agda, fetchFromGitHub, ghcWithPackages }:
+{ stdenv, mkDerivation, fetchFromGitHub, ghcWithPackages }:
 
-agda.mkDerivation rec {
-  pname = "agda-stdlib";
+mkDerivation rec {
+  pname = "standard-library";
   version = "1.1";
-
-  libraryName = "standard-library";
 
   src = fetchFromGitHub {
     repo = "agda-stdlib";

@@ -1,8 +1,8 @@
-{ stdenv, agda, Agda, fetchFromGitHub }:
+{ stdenv, mkDerivation, Agda, fetchFromGitHub }:
 
-agda.mkDerivation (rec {
+mkDerivation (rec {
   version = "1.5.0";
-  pname = "agda-iowa-stdlib";
+  pname = "iowa-stdlib";
 
   src = fetchFromGitHub {
     owner = "cedille";
