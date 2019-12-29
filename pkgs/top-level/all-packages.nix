@@ -14854,12 +14854,12 @@ in
   ### DEVELOPMENT / LIBRARIES / AGDA
 
   agda = callPackage ../build-support/agda {
-    glibcLocales = if pkgs.stdenv.isLinux then pkgs.glibcLocales else null;
-    extension = self : super : { };
     inherit (haskellPackages) Agda;
   };
 
-  agdaIowaStdlib = callPackage ../development/libraries/agda/agda-iowa-stdlib { };
+  agdaIowaStdlib = callPackage ../development/libraries/agda/agda-iowa-stdlib {
+    inherit (haskellPackages) Agda;
+  };
 
   agdaPrelude = callPackage ../development/libraries/agda/agda-prelude { };
 

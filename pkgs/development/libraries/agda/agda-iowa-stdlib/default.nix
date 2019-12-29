@@ -1,8 +1,8 @@
-{ stdenv, agda, fetchFromGitHub }:
+{ stdenv, agda, Agda, fetchFromGitHub }:
 
-agda.mkDerivation (self: rec {
+agda.mkDerivation (rec {
   version = "1.5.0";
-  name = "agda-iowa-stdlib-${version}";
+  pname = "agda-iowa-stdlib";
 
   src = fetchFromGitHub {
     owner = "cedille";
@@ -11,7 +11,9 @@ agda.mkDerivation (self: rec {
     sha256 = "0dlis6v6nzbscf713cmwlx8h9n2gxghci8y21qak3hp18gkxdp0g";
   };
 
-  sourceDirectories = [ "./." ];
+  libraryFile = "";
+  libraryName = "IAL-1.3";
+
   buildPhase = ''
     patchShebangs find-deps.sh
     make
