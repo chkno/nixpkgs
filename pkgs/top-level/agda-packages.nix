@@ -19,5 +19,7 @@ let
     };
 
     agda-prelude = callPackage ../development/libraries/agda/agda-prelude { };
+
+    agda-categories = callPackage ../development/libraries/agda/agda-categories { };
   };
 in mkAgdaPackages Agda
