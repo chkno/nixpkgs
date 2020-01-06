@@ -5,6 +5,7 @@ let
   mkAgdaPackages' = Agda: self: let
     callPackage = self.callPackage;
   in {
+    inherit Agda;
     inherit (callPackage ../build-support/agda {
       inherit Agda self;
     }) withPackages mkDerivation;
