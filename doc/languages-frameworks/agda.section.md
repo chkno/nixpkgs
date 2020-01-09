@@ -28,7 +28,13 @@ or
 agda.withPackages (p: [ p.standard-library ])
 ```
 
-Agda will not by default use the library. To tell agda to use the library we have some options:
+If you want to use a library in your home directory (for instance if it doesn't have a nix derivation or is a development version) then `agda.withPackages'` can be used, which also allows you to input the paths of extra libraries as follows:
+
+```
+agda.withPackages' [ agda.standard-library ] "path/to/my/package.agda-lib"
+```
+
+Agda will not by default use these libraries. To tell agda to use the library we have some options:
 - Call `agda` with the library flag:
 ```
 $ agda -l standard-library -i . MyFile.agda
