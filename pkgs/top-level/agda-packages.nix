@@ -8,6 +8,7 @@ let
     inherit Agda;
     inherit (callPackage ../build-support/agda {
       inherit Agda self;
+      inherit (pkgs.haskellPackages) ghcWithPackages;
     }) withPackages mkDerivation;
 
     standard-library = callPackage ../development/libraries/agda/standard-library {

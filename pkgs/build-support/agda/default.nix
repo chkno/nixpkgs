@@ -1,6 +1,6 @@
 # Builder for Agda packages.
 
-{ stdenv, lib, self, Agda, runCommand, makeWrapper, writeText, mkShell }:
+{ stdenv, lib, self, Agda, runCommand, makeWrapper, writeText, mkShell, ghcWithPackages }:
 
 with lib.strings;
 
@@ -13,12 +13,14 @@ let
     '';
     pname = "agdaWithPackages";
     version = Agda.version;
+    ghc = "${ghcWithPackages (p: with p; [ ieee ])}/bin/ghc";
   in runCommand "${pname}-${version}" {
     inherit pname version;
     nativeBuildInputs = [ makeWrapper ];
   } ''
     mkdir -p $out/bin
     makeWrapper ${Agda}/bin/agda $out/bin/agda \
+      --add-flags "--with-compiler=${ghc}" \
       --add-flags "--library-file=${library-file}"
     '';
 
