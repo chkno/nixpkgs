@@ -699,4 +699,8 @@ self: super: builtins.intersectAttrs super {
   # checks SQL statements at compile time, and so requires a running PostgreSQL
   # database to run it's test suite
   postgresql-typed = dontCheck super.postgresql-typed;
+
+  # For the --with-complier flag.  This will be included in the next Agda
+  # release (after 2.6.0.1), at which point this patch can be removed.
+  Agda = appendPatch super.Agda ./patches/agda-with-compiler.patch;
 }

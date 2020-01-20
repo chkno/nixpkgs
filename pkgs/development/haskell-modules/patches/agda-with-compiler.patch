@@ -1,0 +1,95 @@
+# This is Agda commit 2ec3ccc88df9bb7203004c8ea7ca0e8194e34604 minimally adjusted to merge cleanly with v2.6.0.1.
+diff --git a/src/full/Agda/Compiler/Backend.hs b/src/full/Agda/Compiler/Backend.hs
+index 8957229f2..45bb00dc7 100644
+--- a/src/full/Agda/Compiler/Backend.hs
++++ b/src/full/Agda/Compiler/Backend.hs
+@@ -194,9 +194,9 @@ compilerMain backend isMain0 i =
+ 
+ compileModule :: Backend' opts env menv mod def -> env -> IsMain -> Interface -> TCM mod
+ compileModule backend env isMain i = do
+-  ifile <- maybe __IMPOSSIBLE__ filePath <$>
+-            (findInterfaceFile . toTopLevelModuleName =<< curMName)
+-  r <- preModule backend env (iModuleName i) ifile
++  mName <- toTopLevelModuleName <$> curMName
++  ifile <- maybe __IMPOSSIBLE__ filePath <$> findInterfaceFile mName
++  r     <- preModule backend env (iModuleName i) ifile
+   case r of
+     Skip m         -> return m
+     Recompile menv -> do
+@@ -205,4 +205,6 @@ compileModule backend env isMain i = do
+       postModule backend env menv isMain (iModuleName i) res
+ 
+ compileDef' :: Backend' opts env menv mod def -> env -> menv -> IsMain -> Definition -> TCM def
+-compileDef' backend env menv isMain def = setCurrentRange (defName def) $ compileDef backend env menv isMain def
++compileDef' backend env menv isMain def =
++  setCurrentRange (defName def) $
++    compileDef backend env menv isMain def
+diff --git a/src/full/Agda/Compiler/JS/Compiler.hs b/src/full/Agda/Compiler/JS/Compiler.hs
+index ff3cf5363..82734461d 100644
+--- a/src/full/Agda/Compiler/JS/Compiler.hs
++++ b/src/full/Agda/Compiler/JS/Compiler.hs
+@@ -522,7 +522,6 @@ outFile_ = do
+   m <- curMName
+   outFile (jsMod m)
+ 
+-
+ copyRTEModules :: TCM ()
+ copyRTEModules = do
+   dataDir <- lift getDataDir
+diff --git a/src/full/Agda/Compiler/MAlonzo/Compiler.hs b/src/full/Agda/Compiler/MAlonzo/Compiler.hs
+index 07042e921..d908eb795 100644
+--- a/src/full/Agda/Compiler/MAlonzo/Compiler.hs
++++ b/src/full/Agda/Compiler/MAlonzo/Compiler.hs
+@@ -850,7 +850,8 @@ callGHC opts modIsMain mods = do
+         , "-fno-warn-overlapping-patterns"
+         ]
+       args     = overridableArgs ++ ghcopts ++ otherArgs
+-      compiler = "ghc"
++
++  compiler <- fromMaybeM (pure "ghc") (optWithCompiler <$> commandLineOptions)
+ 
+   -- Note: Some versions of GHC use stderr for progress reports. For
+   -- those versions of GHC we don't print any progress information
+diff --git a/src/full/Agda/Interaction/Options.hs b/src/full/Agda/Interaction/Options.hs
+index c691f6a20..27ceeeda0 100644
+--- a/src/full/Agda/Interaction/Options.hs
++++ b/src/full/Agda/Interaction/Options.hs
+@@ -126,6 +126,8 @@ data CommandLineOptions = Options
+   , optOnlyScopeChecking :: Bool
+     -- ^ Should the top-level module only be scope-checked, and not
+     --   type-checked?
++  , optWithCompiler     :: Maybe FilePath
++    -- ^ Use the compiler at PATH instead of ghc / js / etc.
+   }
+   deriving Show
+ 
+@@ -230,6 +232,7 @@ defaultOptions = Options
+   , optForcing          = True
+   , optPragmaOptions    = defaultPragmaOptions
+   , optOnlyScopeChecking = False
++  , optWithCompiler      = Nothing
+   }
+ 
+ defaultPragmaOptions :: PragmaOptions
+@@ -742,6 +745,12 @@ terminationDepthFlag s o =
+        return $ o { optTerminationDepth = CutOff $ k-1 }
+     where usage = throwError "argument to termination-depth should be >= 1"
+ 
++withCompilerFlag :: FilePath -> Flag CommandLineOptions
++withCompilerFlag fp o = case optWithCompiler o of
++ Nothing -> pure o { optWithCompiler = Just fp }
++ Just{}  -> throwError "only one compiler path allowed"
++
++
+ integerArgument :: String -> String -> OptM Int
+ integerArgument flag s =
+     readM s `catchError` \_ ->
+@@ -800,6 +809,8 @@ standardOptions =
+                     "disable the forcing optimisation"
+     , Option []     ["only-scope-checking"] (NoArg onlyScopeCheckingFlag)
+                     "only scope-check the top-level module, do not type-check it"
++    , Option []     ["with-compiler"] (ReqArg withCompilerFlag "PATH")
++                    "use the compiler available at PATH"
+     ] ++ map (fmap lensPragmaOptions) pragmaOptions
+ 
+ -- | Defined locally here since module ''Agda.Interaction.Options.Lenses''
