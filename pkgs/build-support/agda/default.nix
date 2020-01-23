@@ -5,26 +5,30 @@
 with lib.strings;
 
 let
-  withPackages' = pkgsFunc: homeLibraries: let
-    pkgs = if builtins.isList pkgsFunc then pkgsFunc else pkgsFunc self;
+  withPackages' = {
+    pkgs,
+    homeLibraries ? "",
+    ghc ? ghcWithPackages (p: with p; [ ieee ])
+  }: let
+    pkgs' = if builtins.isList pkgs then pkgs else pkgs self;
     library-file = writeText "libraries" ''
-      ${(concatMapStringsSep "\n" (p: "${p}/${p.libraryFile}") pkgs)}
+      ${(concatMapStringsSep "\n" (p: "${p}/${p.libraryFile}") pkgs')}
       ${homeLibraries}
     '';
     pname = "agdaWithPackages";
     version = Agda.version;
-    ghc = "${ghcWithPackages (p: with p; [ ieee ])}/bin/ghc";
   in runCommand "${pname}-${version}" {
     inherit pname version;
     nativeBuildInputs = [ makeWrapper ];
   } ''
     mkdir -p $out/bin
     makeWrapper ${Agda}/bin/agda $out/bin/agda \
-      --add-flags "--with-compiler=${ghc}" \
+      --add-flags "--with-compiler=${ghc}/bin/ghc" \
       --add-flags "--library-file=${library-file}"
     '';
 
-  withPackages = pkgsFunc: withPackages' pkgsFunc "";
+  withPackages = arg: if builtins.isAttrs arg then withPackages' arg else withPackages' { pkgs = arg; };
+
 
   defaults =
     { pname
