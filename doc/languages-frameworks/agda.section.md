@@ -28,10 +28,13 @@ or
 agda.withPackages (p: [ p.standard-library ])
 ```
 
-If you want to use a library in your home directory (for instance if it doesn't have a nix derivation or is a development version) then `agda.withPackages'` can be used, which also allows you to input the paths of extra libraries as follows:
+If you want to use a library in your home directory (for instance if it doesn't have a nix derivation or is a development version) then an attribute set can be passed into `agda.withPackages` with the following arguments:
 
 ```
-agda.withPackages' [ agda.standard-library ] "path/to/my/package.agda-lib"
+agda.withPackages {
+  pkgs = [ agda.standard-library ];
+  homeLibraries = "path/to/my/package.agda-lib";
+}
 ```
 
 Agda will not by default use these libraries. To tell agda to use the library we have some options:
@@ -50,7 +53,14 @@ depends: standard-library
 More information can be found [here](https://agda.readthedocs.io/en/v2.6.0.1/tools/package-system.html).
 
 ## Compiling Agda
-Agda modules can be compiled with the `--compile` flag. This will require `ghc` to be available. Further, some parts of the standard library require that the haskell library `ieee` be available.
+Agda modules can be compiled with the `--compile` flag. A version of `ghc` with `ieee` is made available to the Agda program via the `--with-compiler` flag. This can be overriden by a different version of `ghc` as follows:
+
+```
+agda.withPackages {
+  pkgs = [ ... ];
+  ghc = myGhcDerivation;
+}
+```
 
 ## Writing Agda packages
 To write a nix derivation for an agda library, first check that the library has a `*.agda-lib` file.
