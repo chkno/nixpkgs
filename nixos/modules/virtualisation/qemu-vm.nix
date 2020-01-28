@@ -46,6 +46,12 @@ let
         description = "Extra options passed to device flag.";
       };
 
+      name = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "A name. Not passed to qemu.";
+      };
+
     };
 
   };
@@ -80,6 +86,13 @@ let
       "/dev/sd${letter}"
     else
       "/dev/vd${letter}";
+
+  lookupDriveDeviceName = driveName: driveList:
+    (findSingle (drive: drive.name == driveName)
+    (throw "Drive ${driveName} not found")
+    (throw "Multilple drives named ${driveName}") driveList).device;
+
+  addDeviceNames = imap0 (idx: drive: drive // { device = driveDeviceName idx; });
 
   # Shell script to start the VM.
   startVM =
@@ -403,6 +416,7 @@ in
         mkOption {
           type = types.listOf (types.submodule driveOpts);
           description = "Drives passed to qemu.";
+          apply = addDeviceNames;
         };
 
       diskInterface =
@@ -555,6 +569,7 @@ in
       }]
       (mkIf cfg.useBootLoader [
         {
+          name = "boot";
           file = "$TMPDIR/disk.img";
           driveExtraOpts.media = "disk";
           deviceExtraOpts.bootindex = "1";
@@ -607,7 +622,7 @@ in
           };
       } // optionalAttrs cfg.useBootLoader
       { "/boot" =
-          { device = "${driveDeviceName 1}2";
+          { device = lookupDriveDeviceName "boot" cfg.qemu.drives;
             fsType = "vfat";
             options = [ "ro" ];
             noCheck = true; # fsck fails on a r/o filesystem
