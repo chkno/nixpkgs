@@ -411,6 +411,10 @@ void printList(Context & ctx, Out & out, Value & v)
 
 void printAttrs(Context & ctx, Out & out, Value & v, const std::string & path)
 {
+    if (ctx.seen.seenBefore(v)) {
+        out << "«repeated»";
+        return;
+    }
     if (isHugeAttrSet(ctx, v)) {
       out << "«set with " << v.attrs->size() << " attributes»";
       return;
@@ -472,10 +476,6 @@ void printValue(Context & ctx, Out & out, ValueRefOrError maybeValue, const std:
             std::rethrow_exception(*ex);
         }
         Value & v = evaluateValue(ctx, std::get<ValueRef>(maybeValue));
-        if (ctx.seen.seenBefore(v)) {
-            out << "«repeated»";
-            return;
-        }
         if (ctx.state.isDerivation(v)) {
             describeDerivation(ctx, out, v);
         } else if (v.isList()) {
