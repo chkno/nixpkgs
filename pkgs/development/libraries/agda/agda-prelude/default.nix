@@ -1,14 +1,14 @@
-{ stdenv, mkDerivation, fetchFromGitHub, version, sha256 }:
+{ stdenv, mkDerivation, fetchFromGitHub }:
 
-mkDerivation {
-  inherit version;
+mkDerivation rec {
   pname = "agda-prelude";
+  version = "compat-2.6.0";
 
   src = fetchFromGitHub {
     owner = "UlfNorell";
     repo = "agda-prelude";
     rev = version;
-    inherit sha256;
+    sha256 = "16pysyq6nf37zk9js4l5gfd2yxgf2dh074r9507vqkg6vfhdj2w6";
   };
 
   preConfigure = ''
