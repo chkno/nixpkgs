@@ -1,17 +1,21 @@
-{ lib, mkDerivation, fetchFromGitHub, standard-library }:
+{ lib, mkDerivation, fetchFromGitHub, standard-library, version, sha256 }:
 
-mkDerivation rec {
-  version = "0.1";
+mkDerivation {
+  inherit version;
   pname = "agda-categories";
 
   src = fetchFromGitHub {
     owner = "agda";
     repo = "agda-categories";
     rev = "release/v${version}";
-    sha256 = "0m4pjy92jg6zfziyv0bxv5if03g8k4413ld8c3ii2xa8bzfn04m2";
+    inherit sha256;
   };
 
-  buildInputsAgda = [ standard-library ];
+  # Does not work with standard-library 1.2
+  buildInputsAgda = [ (standard-library.override {
+    version = "1.1";
+    sha256 = "190bxsy92ffmvwpmyyg3lxs91vyss2z25rqz1w79gkj56484cy64";
+  }) ];
 
   meta = with lib; {
     inherit (src.meta) homepage;
@@ -21,8 +25,6 @@ mkDerivation rec {
     # agda categories takes a lot of memory to build.
     # This can be removed if this is eventually fixed upstream.
     hydraPlatforms = [];
-    # Does not work with standard-library 1.2
-    broken = true;
     maintainers = with maintainers; [ alexarice ];
   };
 }
