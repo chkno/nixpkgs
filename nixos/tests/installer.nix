@@ -134,6 +134,9 @@ let
           machine.succeed("[[ -e /mnt/nixos-enter-works ]]")
 
       with subtest("Can build things in the installed environment"):
+          # Workaround for https://github.com/NixOS/nixpkgs/issues/39140
+          machine.succeed("mkdir --mode 1777 /mnt/tmp")
+
           machine.succeed(
               """
               nixos-enter -- nix-build --option substitute false -E 'derivation {
