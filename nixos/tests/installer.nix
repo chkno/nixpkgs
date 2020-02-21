@@ -133,6 +133,19 @@ let
           machine.succeed("nixos-enter -- touch /nixos-enter-works")
           machine.succeed("[[ -e /mnt/nixos-enter-works ]]")
 
+      with subtest("Can build things in the installed environment"):
+          machine.succeed(
+              """
+              nixos-enter -- nix-build --option substitute false -E 'derivation {
+                  name = "t";
+                  builder = "/bin/sh";
+                  args = ["-c" "echo nixos-enter build > $out"];
+                  system = builtins.currentSystem;
+                  preferLocalBuild = true;
+              }'
+          """
+          )
+
       with subtest("Shutdown system after installation"):
           machine.succeed("umount /mnt/boot || true")
           machine.succeed("umount /mnt")
