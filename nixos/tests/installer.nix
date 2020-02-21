@@ -129,6 +129,10 @@ let
       with subtest("Do it again to make sure it's idempotent"):
           machine.succeed("nixos-install < /dev/null >&2")
 
+      with subtest("Can enter the installed environment"):
+          machine.succeed("nixos-enter -- touch /nixos-enter-works")
+          machine.succeed("[[ -e /mnt/nixos-enter-works ]]")
+
       with subtest("Shutdown system after installation"):
           machine.succeed("umount /mnt/boot || true")
           machine.succeed("umount /mnt")
