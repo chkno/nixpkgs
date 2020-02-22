@@ -139,7 +139,7 @@ let
 
           machine.succeed(
               """
-              nixos-enter -- nix-build --option substitute false -E 'derivation {
+              nixos-enter -- strace -f nix-build --show-trace -vvvvvvvvv --option substitute false -E 'derivation {
                   name = "t";
                   builder = "/bin/sh";
                   args = ["-c" "echo nixos-enter build > $out"];
