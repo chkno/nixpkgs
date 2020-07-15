@@ -102,13 +102,14 @@ releaseTools.sourceTarball {
     fi
 
     header "generating packages.json"
-    mkdir -p $out/nix-support
-    echo -n '{"version":2,"packages":' > tmp
-    nix-env -f . -I nixpkgs=${src} -qa --json --arg config 'import ${./packages-config.nix}' "''${opts[@]}" >> tmp
-    echo -n '}' >> tmp
     packages=$out/packages.json.br
-    < tmp sed "s|$(pwd)/||g" | jq -c | brotli -9 > $packages
+    {
+      echo -n '{"version":2,"packages":'
+      nix-env -f . -I nixpkgs=${src} -qa --json --arg config 'import ${./packages-config.nix}' "''${opts[@]}"
+      echo -n '}'
+    } | sed "s|$(pwd)/||g" | jq -c | brotli -9 > "$packages"
 
+    mkdir -p $out/nix-support
     echo "file json-br $packages" >> $out/nix-support/hydra-build-products
   '';
 
