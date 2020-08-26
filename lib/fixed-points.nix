@@ -70,12 +70,12 @@ rec {
 
   # Compose two extending functions of the type expected by 'extends'
   # into one where changes made in the first are available in the
-  # 'super' of the second
+  # 'prev' of the second
   composeExtensions =
-    f: g: self: super:
-      let fApplied = f self super;
-          super' = super // fApplied;
-      in fApplied // g self super';
+    f: g: final: prev:
+      let fApplied = f final prev;
+          prev' = prev // fApplied;
+      in fApplied // g final prev';
 
   # Create an overridable, recursive attribute set. For example:
   #
