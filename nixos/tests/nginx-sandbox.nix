@@ -8,8 +8,8 @@ import ./make-test-python.nix ({ pkgs, ... }: {
 
   machine = { pkgs, ... }: {
     nixpkgs.overlays = [
-      (self: super: {
-        nginx-lua = super.nginx.override {
+      (final: prev: {
+        nginx-lua = prev.nginx.override {
           modules = [
             pkgs.nginxModules.lua
           ];

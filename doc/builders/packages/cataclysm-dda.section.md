@@ -53,9 +53,9 @@ in nixpkgs:
 
 ```nix
 let
-  customMods = self: super: lib.recursiveUpdate super {
+  customMods = final: prev: lib.recursiveUpdate prev {
     # Modify existing mod
-    tileset.UndeadPeople = super.tileset.UndeadPeople.overrideAttrs (old: {
+    tileset.UndeadPeople = prev.tileset.UndeadPeople.overrideAttrs (old: {
       # If you like to apply a patch to the tileset for example
       patches = [ ./path/to/your.patch ];
     });

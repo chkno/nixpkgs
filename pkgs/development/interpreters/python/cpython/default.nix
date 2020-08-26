@@ -17,7 +17,7 @@
 , python-setup-hook
 , nukeReferences
 # For the Python package set
-, packageOverrides ? (self: super: {})
+, packageOverrides ? (final: prev: {})
 , buildPackages
 , pythonForBuild ? buildPackages.${"python${sourceVersion.major}${sourceVersion.minor}"}
 , sourceVersion

@@ -14,8 +14,8 @@ import ../make-test-python.nix {
     };
     server = { config, pkgs, ... }: {
       nixpkgs.overlays = [
-        (self: super: {
-          prosody = super.prosody.override {
+        (final: prev: {
+          prosody = prev.prosody.override {
             withDBI = true;
             withExtraLibs = [ pkgs.luaPackages.luadbi-mysql ];
           };
@@ -29,7 +29,7 @@ import ../make-test-python.nix {
       networking.firewall.enable = false;
       services.prosody = {
         enable = true;
-        # TODO: use a self-signed certificate
+        # TODO: use a final-signed certificate
         c2sRequireEncryption = false;
         extraConfig = ''
           storage = "sql"

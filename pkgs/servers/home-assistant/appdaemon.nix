@@ -2,8 +2,8 @@
 
 let
   python = python3.override {
-    packageOverrides = self: super: {
-      bcrypt = super.bcrypt.overridePythonAttrs (oldAttrs: rec {
+    packageOverrides = final: prev: {
+      bcrypt = prev.bcrypt.overridePythonAttrs (oldAttrs: rec {
         version = "3.1.4";
         src = oldAttrs.src.override {
           inherit version;
@@ -11,7 +11,7 @@ let
         };
       });
 
-      yarl = super.yarl.overridePythonAttrs (oldAttrs: rec {
+      yarl = prev.yarl.overridePythonAttrs (oldAttrs: rec {
         version = "1.1.0";
         src = oldAttrs.src.override {
           inherit version;
@@ -19,7 +19,7 @@ let
         };
       });
 
-      jinja2 = super.jinja2.overridePythonAttrs (oldAttrs: rec {
+      jinja2 = prev.jinja2.overridePythonAttrs (oldAttrs: rec {
         version = "2.10.1";
         src = oldAttrs.src.override {
           inherit version;
@@ -27,7 +27,7 @@ let
         };
       });
 
-      aiohttp-jinja2 = super.aiohttp-jinja2.overridePythonAttrs (oldAttrs: rec {
+      aiohttp-jinja2 = prev.aiohttp-jinja2.overridePythonAttrs (oldAttrs: rec {
         version = "0.15.0";
         src = oldAttrs.src.override {
           inherit version;

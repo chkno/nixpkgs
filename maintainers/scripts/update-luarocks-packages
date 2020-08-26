@@ -66,9 +66,9 @@ nixpkgs$ ${0} ${GENERATED_NIXFILE}
 
 These packages are manually refined in lua-overrides.nix
 */
-{ self, stdenv, fetchurl, fetchgit, pkgs, ... } @ args:
-self: super:
-with self;
+{ final, stdenv, fetchurl, fetchgit, pkgs, ... } @ args:
+final: prev:
+with final;
 {
 "
 

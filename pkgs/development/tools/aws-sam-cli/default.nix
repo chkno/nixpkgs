@@ -6,8 +6,8 @@
 
 let
   py = python.override {
-    packageOverrides = self: super: {
-      aws-sam-translator = super.aws-sam-translator.overridePythonAttrs (oldAttrs: rec {
+    packageOverrides = final: prev: {
+      aws-sam-translator = prev.aws-sam-translator.overridePythonAttrs (oldAttrs: rec {
         version = "1.25.0";
         src = oldAttrs.src.override {
           inherit version;
@@ -15,7 +15,7 @@ let
         };
       });
 
-      flask = super.flask.overridePythonAttrs (oldAttrs: rec {
+      flask = prev.flask.overridePythonAttrs (oldAttrs: rec {
         version = "1.0.2";
         src = oldAttrs.src.override {
           inherit version;
@@ -23,7 +23,7 @@ let
         };
       });
 
-      cookiecutter = super.cookiecutter.overridePythonAttrs (oldAttrs: rec {
+      cookiecutter = prev.cookiecutter.overridePythonAttrs (oldAttrs: rec {
         version = "1.6.0";
         src = oldAttrs.src.override {
           inherit version;

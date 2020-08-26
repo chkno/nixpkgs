@@ -1,10 +1,10 @@
 { lib, newScope, pkgs, config }:
 
 let
-  liftJaneStreet = self: super: super.janeStreet // super;
+  liftJaneStreet = final: prev: prev.janeStreet // prev;
 
   mkOcamlPackages = ocaml:
-    (lib.makeScope newScope (self: with self;
+    (lib.makeScope newScope (final: with final;
   {
     inherit ocaml;
 

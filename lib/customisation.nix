@@ -206,15 +206,15 @@ rec {
      provided by `newScope' and the set provides a `newScope' attribute
      which can form the parent scope for later package sets. */
   makeScope = newScope: f:
-    let self = f self // {
-          newScope = scope: newScope (self // scope);
-          callPackage = self.newScope {};
+    let final = f final // {
+          newScope = scope: newScope (final // scope);
+          callPackage = final.newScope {};
           overrideScope = g: lib.warn
-            "`overrideScope` (from `lib.makeScope`) is deprecated. Do `overrideScope' (self: super: { … })` instead of `overrideScope (super: self: { … })`. All other overrides have the parameters in that order, including other definitions of `overrideScope`. This was the only definition violating the pattern."
+            "`overrideScope` (from `lib.makeScope`) is deprecated. Do `overrideScope' (final: prev: { … })` instead of `overrideScope (prev: final: { … })`. All other overrides have the parameters in that order, including other definitions of `overrideScope`. This was the only definition violating the pattern."
             (makeScope newScope (lib.fixedPoints.extends (lib.flip g) f));
           overrideScope' = g: makeScope newScope (lib.fixedPoints.extends g f);
           packages = f;
         };
-    in self;
+    in final;
 
 }

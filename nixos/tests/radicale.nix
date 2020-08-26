@@ -33,9 +33,9 @@ in
       radicale = radicale1; # Make the test script read more nicely
       radicale1 = lib.recursiveUpdate (common args) {
         nixpkgs.overlays = [
-          (self: super: {
-            radicale1 = super.radicale1.overrideAttrs (oldAttrs: {
-              propagatedBuildInputs = with self.pythonPackages;
+          (final: prev: {
+            radicale1 = prev.radicale1.overrideAttrs (oldAttrs: {
+              propagatedBuildInputs = with final.pythonPackages;
                 (oldAttrs.propagatedBuildInputs or []) ++ [ passlib ];
             });
           })

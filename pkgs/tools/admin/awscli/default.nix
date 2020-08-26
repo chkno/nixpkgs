@@ -6,8 +6,8 @@
 
 let
   py = python3.override {
-    packageOverrides = self: super: {
-      rsa = super.rsa.overridePythonAttrs (oldAttrs: rec {
+    packageOverrides = final: prev: {
+      rsa = prev.rsa.overridePythonAttrs (oldAttrs: rec {
         version = "3.4.2";
         src = oldAttrs.src.override {
           inherit version;

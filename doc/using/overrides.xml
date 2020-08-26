@@ -27,8 +27,8 @@
            and reference it
   -->
 <programlisting>
-import pkgs.path { overlays = [ (self: super: {
-  foo = super.foo.override { barSupport = true ; };
+import pkgs.path { overlays = [ (final: prev: {
+  foo = prev.foo.override { barSupport = true ; };
   })]};
 </programlisting>
 <programlisting>

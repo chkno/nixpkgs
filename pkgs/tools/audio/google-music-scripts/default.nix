@@ -2,8 +2,8 @@
 
 let
   py = python3.override {
-    packageOverrides = self: super: {
-      loguru = super.loguru.overridePythonAttrs (oldAttrs: rec {
+    packageOverrides = final: prev: {
+      loguru = prev.loguru.overridePythonAttrs (oldAttrs: rec {
         version = "0.4.0";
         src = oldAttrs.src.override {
           inherit version;

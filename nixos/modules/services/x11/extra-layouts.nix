@@ -118,41 +118,41 @@ in
     # reduce the amount of packages to be recompiled.
     # Only the following packages are necessary to set
     # a custom layout anyway:
-    nixpkgs.overlays = lib.singleton (self: super: {
+    nixpkgs.overlays = lib.singleton (final: prev: {
 
-      xkb_patched = self.xorg.xkeyboardconfig_custom {
+      xkb_patched = final.xorg.xkeyboardconfig_custom {
         layouts = config.services.xserver.extraLayouts;
       };
 
-      xorg = super.xorg // {
-        xorgserver = super.xorg.xorgserver.overrideAttrs (old: {
+      xorg = prev.xorg // {
+        xorgserver = prev.xorg.xorgserver.overrideAttrs (old: {
           configureFlags = old.configureFlags ++ [
-            "--with-xkb-bin-directory=${self.xorg.xkbcomp}/bin"
-            "--with-xkb-path=${self.xkb_patched}/share/X11/xkb"
+            "--with-xkb-bin-directory=${final.xorg.xkbcomp}/bin"
+            "--with-xkb-path=${final.xkb_patched}/share/X11/xkb"
           ];
         });
 
-        setxkbmap = super.xorg.setxkbmap.overrideAttrs (old: {
+        setxkbmap = prev.xorg.setxkbmap.overrideAttrs (old: {
           postInstall =
             ''
               mkdir -p $out/share
-              ln -sfn ${self.xkb_patched}/etc/X11 $out/share/X11
+              ln -sfn ${final.xkb_patched}/etc/X11 $out/share/X11
             '';
         });
 
-        xkbcomp = super.xorg.xkbcomp.overrideAttrs (old: {
-          configureFlags = [ "--with-xkb-config-root=${self.xkb_patched}/share/X11/xkb" ];
+        xkbcomp = prev.xorg.xkbcomp.overrideAttrs (old: {
+          configureFlags = [ "--with-xkb-config-root=${final.xkb_patched}/share/X11/xkb" ];
         });
 
       };
 
-      ckbcomp = super.ckbcomp.override {
-        xkeyboard_config = self.xkb_patched;
+      ckbcomp = prev.ckbcomp.override {
+        xkeyboard_config = final.xkb_patched;
       };
 
-      xkbvalidate = super.xkbvalidate.override {
-        libxkbcommon = self.libxkbcommon.override {
-          xkeyboard_config = self.xkb_patched;
+      xkbvalidate = prev.xkbvalidate.override {
+        libxkbcommon = final.libxkbcommon.override {
+          xkeyboard_config = final.xkb_patched;
         };
       };
 

@@ -42,14 +42,14 @@ rec {
 
   # : Map Name (Either Path VersionNumber) -> HaskellPackageOverrideSet
   # Given a set whose values are either paths or version strings, produces
-  # a package override set (i.e. (self: super: { etc. })) that sets
+  # a package override set (i.e. (final: prev: { etc. })) that sets
   # the packages named in the input set to the corresponding versions
   packageSourceOverrides =
-    overrides: self: super: pkgs.lib.mapAttrs (name: src:
+    overrides: final: prev: pkgs.lib.mapAttrs (name: src:
       let isPath = x: builtins.substring 0 1 (toString x) == "/";
           generateExprs = if isPath src
-                             then self.callCabal2nix
-                             else self.callHackage;
+                             then final.callCabal2nix
+                             else final.callHackage;
       in generateExprs name src {}) overrides;
 
   /* doCoverage modifies a haskell package to enable the generation
@@ -354,14 +354,14 @@ rec {
   packagesFromDirectory =
     { directory, ... }:
 
-    self: super:
+    final: prev:
       let
         haskellPaths = builtins.attrNames (builtins.readDir directory);
 
         toKeyVal = file: {
           name  = builtins.replaceStrings [ ".nix" ] [ "" ] file;
 
-          value = self.callPackage (directory + "/${file}") { };
+          value = final.callPackage (directory + "/${file}") { };
         };
 
       in

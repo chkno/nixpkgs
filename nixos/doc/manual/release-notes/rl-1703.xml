@@ -526,7 +526,7 @@
    <listitem>
     <para>
      <literal>stdenv.overrides</literal> is now expected to take
-     <literal>self</literal> and <literal>super</literal> arguments. See
+     <literal>final</literal> and <literal>prev</literal> arguments. See
      <literal>lib.trivial.extends</literal> for what those parameters
      represent.
     </para>
@@ -629,14 +629,14 @@
 let
   pkgs = import &lt;nixpkgs&gt; {};
 in
-  pkgs.overridePackages (self: super: ...)
+  pkgs.overridePackages (final: prev: ...)
 </programlisting>
      should be replaced by:
 <programlisting>
 let
   pkgs = import &lt;nixpkgs&gt; {};
 in
-  import pkgs.path { overlays = [(self: super: ...)]; }
+  import pkgs.path { overlays = [(final: prev: ...)]; }
 </programlisting>
     </para>
    </listitem>

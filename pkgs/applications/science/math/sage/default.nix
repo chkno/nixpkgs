@@ -11,7 +11,7 @@ let
 
   # https://trac.sagemath.org/ticket/15980 for tracking of python3 support
   python = pkgs.python2.override {
-    packageOverrides = self: super: {
+    packageOverrides = final: prev: {
       # python packages that appear unmaintained and were not accepted into the nixpkgs
       # tree because of that. These packages are only dependencies of the more-or-less
       # deprecated sagenb. However sagenb is still a default dependency and the doctests
@@ -20,18 +20,18 @@ let
       # The dependency on the sage notebook (and therefore these packages) will be
       # removed in the future:
       # https://trac.sagemath.org/ticket/25837
-      flask-oldsessions = self.callPackage ./flask-oldsessions.nix {};
-      flask-openid = self.callPackage ./flask-openid.nix {};
-      python-openid = self.callPackage ./python-openid.nix {};
-      sagenb = self.callPackage ./sagenb.nix {
+      flask-oldsessions = final.callPackage ./flask-oldsessions.nix {};
+      flask-openid = final.callPackage ./flask-openid.nix {};
+      python-openid = final.callPackage ./python-openid.nix {};
+      sagenb = final.callPackage ./sagenb.nix {
         mathjax = nodePackages.mathjax;
       };
 
       # Package with a cyclic dependency with sage
-      pybrial = self.callPackage ./pybrial.nix {};
+      pybrial = final.callPackage ./pybrial.nix {};
 
       # `sagelib`, i.e. all of sage except some wrappers and runtime dependencies
-      sagelib = self.callPackage ./sagelib.nix {
+      sagelib = final.callPackage ./sagelib.nix {
         inherit flint ecl arb;
         inherit sage-src env-locations pynac singular;
         linbox = pkgs.linbox.override { withSage = true; };

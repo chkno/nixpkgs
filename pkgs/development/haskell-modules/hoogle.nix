@@ -9,7 +9,7 @@
 #   haskellPackages =
 #     let callPackage = pkgs.lib.callPackageWith haskellPackages;
 #     in pkgs.recurseIntoAttrs (pkgs.haskellPackages.override {
-#         extension = self: super: {
+#         extension = final: prev: {
 #           hoogleLocal = pkgs.haskellPackages.hoogleLocal.override {
 #             packages = with pkgs.haskellPackages; [
 #               mmorph

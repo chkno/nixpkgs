@@ -79,24 +79,24 @@ def make_request(url: str) -> urllib.request.Request:
 
 class Repo:
     def __init__(
-        self, owner: str, name: str, branch: str, alias: Optional[str]
+        final, owner: str, name: str, branch: str, alias: Optional[str]
     ) -> None:
-        self.owner = owner
-        self.name = name
-        self.branch = branch
-        self.alias = alias
-        self.redirect: Dict[str, str] = {}
+        final.owner = owner
+        final.name = name
+        final.branch = branch
+        final.alias = alias
+        final.redirect: Dict[str, str] = {}
 
-    def url(self, path: str) -> str:
-        return urljoin(f"https://github.com/{self.owner}/{self.name}/", path)
+    def url(final, path: str) -> str:
+        return urljoin(f"https://github.com/{final.owner}/{final.name}/", path)
 
-    def __repr__(self) -> str:
-        return f"Repo({self.owner}, {self.name})"
+    def __repr__(final) -> str:
+        return f"Repo({final.owner}, {final.name})"
 
     @retry(urllib.error.URLError, tries=4, delay=3, backoff=2)
-    def has_submodules(self) -> bool:
+    def has_submodules(final) -> bool:
         try:
-            req = make_request(self.url(f"blob/{self.branch}/.gitmodules"))
+            req = make_request(final.url(f"blob/{final.branch}/.gitmodules"))
             urllib.request.urlopen(req, timeout=10).close()
         except urllib.error.HTTPError as e:
             if e.code == 404:
@@ -106,15 +106,15 @@ class Repo:
         return True
 
     @retry(urllib.error.URLError, tries=4, delay=3, backoff=2)
-    def latest_commit(self) -> Tuple[str, datetime]:
-        commit_url = self.url(f"commits/{self.branch}.atom")
+    def latest_commit(final) -> Tuple[str, datetime]:
+        commit_url = final.url(f"commits/{final.branch}.atom")
         commit_req = make_request(commit_url)
         with urllib.request.urlopen(commit_req, timeout=10) as req:
-            self.check_for_redirect(commit_url, req)
+            final.check_for_redirect(commit_url, req)
             xml = req.read()
             root = ET.fromstring(xml)
             latest_entry = root.find(ATOM_ENTRY)
-            assert latest_entry is not None, f"No commits found in repository {self}"
+            assert latest_entry is not None, f"No commits found in repository {final}"
             commit_link = latest_entry.find(ATOM_LINK)
             assert commit_link is not None, f"No link tag found feed entry {xml}"
             url = urlparse(commit_link.get("href"))
@@ -125,58 +125,58 @@ class Repo:
             updated = datetime.strptime(updated_tag.text, "%Y-%m-%dT%H:%M:%SZ")
             return Path(str(url.path)).name, updated
 
-    def check_for_redirect(self, url: str, req: http.client.HTTPResponse):
+    def check_for_redirect(final, url: str, req: http.client.HTTPResponse):
         response_url = req.geturl()
         if url != response_url:
             new_owner, new_name = (
                 urllib.parse.urlsplit(response_url).path.strip("/").split("/")[:2]
             )
-            end_line = "\n" if self.alias is None else f" as {self.alias}\n"
+            end_line = "\n" if final.alias is None else f" as {final.alias}\n"
             plugin_line = "{owner}/{name}" + end_line
 
-            old_plugin = plugin_line.format(owner=self.owner, name=self.name)
+            old_plugin = plugin_line.format(owner=final.owner, name=final.name)
             new_plugin = plugin_line.format(owner=new_owner, name=new_name)
-            self.redirect[old_plugin] = new_plugin
+            final.redirect[old_plugin] = new_plugin
 
-    def prefetch_git(self, ref: str) -> str:
+    def prefetch_git(final, ref: str) -> str:
         data = subprocess.check_output(
-            ["nix-prefetch-git", "--fetch-submodules", self.url(""), ref]
+            ["nix-prefetch-git", "--fetch-submodules", final.url(""), ref]
         )
         return json.loads(data)["sha256"]
 
-    def prefetch_github(self, ref: str) -> str:
+    def prefetch_github(final, ref: str) -> str:
         data = subprocess.check_output(
-            ["nix-prefetch-url", "--unpack", self.url(f"archive/{ref}.tar.gz")]
+            ["nix-prefetch-url", "--unpack", final.url(f"archive/{ref}.tar.gz")]
         )
         return data.strip().decode("utf-8")
 
 
 class Plugin:
     def __init__(
-        self,
+        final,
         name: str,
         commit: str,
         has_submodules: bool,
         sha256: str,
         date: Optional[datetime] = None,
     ) -> None:
-        self.name = name
-        self.commit = commit
-        self.has_submodules = has_submodules
-        self.sha256 = sha256
-        self.date = date
+        final.name = name
+        final.commit = commit
+        final.has_submodules = has_submodules
+        final.sha256 = sha256
+        final.date = date
 
     @property
-    def normalized_name(self) -> str:
-        return self.name.replace(".", "-")
+    def normalized_name(final) -> str:
+        return final.name.replace(".", "-")
 
     @property
-    def version(self) -> str:
-        assert self.date is not None
-        return self.date.strftime("%Y-%m-%d")
+    def version(final) -> str:
+        assert final.date is not None
+        return final.date.strftime("%Y-%m-%d")
 
-    def as_json(self) -> Dict[str, str]:
-        copy = self.__dict__.copy()
+    def as_json(final) -> Dict[str, str]:
+        copy = final.__dict__.copy()
         del copy["date"]
         return copy
 
@@ -199,18 +199,18 @@ in lib.filterAttrs (n: v: v != null) checksums)"""
 
 
 class CleanEnvironment(object):
-    def __enter__(self) -> None:
-        self.old_environ = os.environ.copy()
+    def __enter__(final) -> None:
+        final.old_environ = os.environ.copy()
         local_pkgs = str(ROOT.joinpath("../../.."))
         os.environ["NIX_PATH"] = f"localpkgs={local_pkgs}"
-        self.empty_config = NamedTemporaryFile()
-        self.empty_config.write(b"{}")
-        self.empty_config.flush()
-        os.environ["NIXPKGS_CONFIG"] = self.empty_config.name
+        final.empty_config = NamedTemporaryFile()
+        final.empty_config.write(b"{}")
+        final.empty_config.flush()
+        os.environ["NIXPKGS_CONFIG"] = final.empty_config.name
 
-    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        os.environ.update(self.old_environ)
-        self.empty_config.close()
+    def __exit__(final, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        os.environ.update(final.old_environ)
+        final.empty_config.close()
 
 
 def get_current_plugins() -> List[Plugin]:
@@ -331,21 +331,21 @@ def get_cache_path() -> Optional[Path]:
 
 
 class Cache:
-    def __init__(self, initial_plugins: List[Plugin]) -> None:
-        self.cache_file = get_cache_path()
+    def __init__(final, initial_plugins: List[Plugin]) -> None:
+        final.cache_file = get_cache_path()
 
         downloads = {}
         for plugin in initial_plugins:
             downloads[plugin.commit] = plugin
-        downloads.update(self.load())
-        self.downloads = downloads
+        downloads.update(final.load())
+        final.downloads = downloads
 
-    def load(self) -> Dict[str, Plugin]:
-        if self.cache_file is None or not self.cache_file.exists():
+    def load(final) -> Dict[str, Plugin]:
+        if final.cache_file is None or not final.cache_file.exists():
             return {}
 
         downloads: Dict[str, Plugin] = {}
-        with open(self.cache_file) as f:
+        with open(final.cache_file) as f:
             data = json.load(f)
             for attr in data.values():
                 p = Plugin(
@@ -354,22 +354,22 @@ class Cache:
                 downloads[attr["commit"]] = p
         return downloads
 
-    def store(self) -> None:
-        if self.cache_file is None:
+    def store(final) -> None:
+        if final.cache_file is None:
             return
 
-        os.makedirs(self.cache_file.parent, exist_ok=True)
-        with open(self.cache_file, "w+") as f:
+        os.makedirs(final.cache_file.parent, exist_ok=True)
+        with open(final.cache_file, "w+") as f:
             data = {}
-            for name, attr in self.downloads.items():
+            for name, attr in final.downloads.items():
                 data[name] = attr.as_json()
             json.dump(data, f, indent=4, sort_keys=True)
 
-    def __getitem__(self, key: str) -> Optional[Plugin]:
-        return self.downloads.get(key, None)
+    def __getitem__(final, key: str) -> Optional[Plugin]:
+        return final.downloads.get(key, None)
 
-    def __setitem__(self, key: str, value: Plugin) -> None:
-        self.downloads[key] = value
+    def __setitem__(final, key: str, value: Plugin) -> None:
+        final.downloads[key] = value
 
 
 def prefetch(
@@ -397,9 +397,9 @@ def generate_nix(plugins: List[Tuple[str, str, Plugin]], outfile: str):
         f.write(header)
         f.write(
             """
-{ lib, buildVimPluginFrom2Nix, fetchFromGitHub, overrides ? (self: super: {}) }:
+{ lib, buildVimPluginFrom2Nix, fetchFromGitHub, overrides ? (final: prev: {}) }:
 let
-  packages = ( self:
+  packages = ( final:
 {"""
         )
         for owner, repo, plugin in sorted_plugins:

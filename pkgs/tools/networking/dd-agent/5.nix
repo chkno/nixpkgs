@@ -2,8 +2,8 @@
 , unzip, makeWrapper }:
 let
   python' = python.override {
-    packageOverrides = self: super: {
-      docker = self.buildPythonPackage rec {
+    packageOverrides = final: prev: {
+      docker = final.buildPythonPackage rec {
         name = "docker-${version}";
         version = "1.10.6";
 
@@ -14,7 +14,7 @@ let
           sha256 = "1awzpbrkh4fympqzddz5i3ml81b7f0i0nwkvbpmyxjjfqx6l0m4m";
         };
 
-        propagatedBuildInputs = with self; [
+        propagatedBuildInputs = with final; [
           six
           requests
           websocket_client
@@ -28,7 +28,7 @@ let
         doCheck = false;
       };
 
-      pymongo = super.pymongo.overridePythonAttrs (oldAttrs: rec {
+      pymongo = prev.pymongo.overridePythonAttrs (oldAttrs: rec {
         version = "2.9.5";
         src = oldAttrs.src.override {
           inherit version;

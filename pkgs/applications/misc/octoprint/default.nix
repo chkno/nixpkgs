@@ -4,12 +4,12 @@
 , fetchFromGitHub
 , python3
   # To include additional plugins, pass them here as an overlay.
-, packageOverrides ? self: super: {}
+, packageOverrides ? final: prev: {}
 }:
 let
   mkOverride = attrname: version: sha256:
-  self: super: {
-    ${attrname} = super.${attrname}.overridePythonAttrs (
+  final: prev: {
+    ${attrname} = prev.${attrname}.overridePythonAttrs (
       oldAttrs: {
         inherit version;
         src = oldAttrs.src.override {
@@ -20,8 +20,8 @@ let
   };
 
   py = python3.override {
-    self = py;
-    packageOverrides = lib.foldr lib.composeExtensions (self: super: {}) (
+    final = py;
+    packageOverrides = lib.foldr lib.composeExtensions (final: prev: {}) (
       [
         # the following dependencies are non trivial to update since later versions introduce backwards incompatible
         # changes that might affect plugins, or due to other observed problems
@@ -33,8 +33,8 @@ let
 
         # Built-in dependency
         (
-          self: super: {
-            octoprint-filecheck = self.buildPythonPackage rec {
+          final: prev: {
+            octoprint-filecheck = final.buildPythonPackage rec {
               pname = "OctoPrint-FileCheck";
               version = "2020.08.07";
 
@@ -51,8 +51,8 @@ let
 
         # Built-in dependency
         (
-          self: super: {
-            octoprint-firmwarecheck = self.buildPythonPackage rec {
+          final: prev: {
+            octoprint-firmwarecheck = final.buildPythonPackage rec {
               pname = "OctoPrint-FirmwareCheck";
               version = "2020.06.22";
 
@@ -68,8 +68,8 @@ let
         )
 
         (
-          self: super: {
-            octoprint = self.buildPythonPackage rec {
+          final: prev: {
+            octoprint = final.buildPythonPackage rec {
               pname = "OctoPrint";
               version = "1.4.2";
 
@@ -80,7 +80,7 @@ let
                 sha256 = "1bblrjwkccy1ifw7lf55g3k9lq1sqzwd49vj8bfzj2w07a7qda62";
               };
 
-              propagatedBuildInputs = with super; [
+              propagatedBuildInputs = with prev; [
                 octoprint-firmwarecheck
                 octoprint-filecheck
                 markupsafe
@@ -120,7 +120,7 @@ let
                 blinker
               ] ++ lib.optionals stdenv.isDarwin [ py.pkgs.appdirs ];
 
-              checkInputs = with super; [ pytestCheckHook mock ddt ];
+              checkInputs = with prev; [ pytestCheckHook mock ddt ];
 
               postPatch = let
                 ignoreVersionConstraints = [
@@ -151,7 +151,7 @@ let
                 "test_set_external_modification"
               ];
 
-              passthru.python = self.python;
+              passthru.python = final.python;
 
               meta = with stdenv.lib; {
                 homepage = "https://octoprint.org/";

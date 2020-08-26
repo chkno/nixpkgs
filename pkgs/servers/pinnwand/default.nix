@@ -2,8 +2,8 @@
 
 let
   python = python3.override {
-    packageOverrides = self: super: {
-      tornado = super.tornado.overridePythonAttrs (oldAttrs: rec {
+    packageOverrides = final: prev: {
+      tornado = prev.tornado.overridePythonAttrs (oldAttrs: rec {
         version = "6.0.4";
         src = oldAttrs.src.override {
           inherit version;

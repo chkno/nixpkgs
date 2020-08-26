@@ -1,12 +1,12 @@
 { lib
 , newScope
-, overrides ? (self: super: {})
+, overrides ? (final: prev: {})
 }:
 
 let
-  packages = self:
+  packages = final:
     let
-      callPackage = newScope self;
+      callPackage = newScope final;
 
       prefer = version: path:
         let

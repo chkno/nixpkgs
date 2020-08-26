@@ -78,9 +78,9 @@ runTests {
   };
 
   testComposeExtensions = {
-    expr = let obj = makeExtensible (self: { foo = self.bar; });
-               f = self: super: { bar = false; baz = true; };
-               g = self: super: { bar = super.baz or false; };
+    expr = let obj = makeExtensible (final: { foo = final.bar; });
+               f = final: prev: { bar = false; baz = true; };
+               g = final: prev: { bar = prev.baz or false; };
                f_o_g = composeExtensions f g;
                composed = obj.extend f_o_g;
            in composed.foo;

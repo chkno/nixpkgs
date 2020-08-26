@@ -7,9 +7,9 @@
 , extraPackages ? ps: []
 
 # Override Python packages using
-# self: super: { pkg = super.pkg.overridePythonAttrs (oldAttrs: { ... }); }
+# final: prev: { pkg = prev.pkg.overridePythonAttrs (oldAttrs: { ... }); }
 # Applied after defaultOverrides
-, packageOverrides ? self: super: {
+, packageOverrides ? final: prev: {
   # TODO: Remove this override after updating to cryptography 2.8:
 
 }
@@ -33,21 +33,21 @@ let
       "1xvcv3sbcn9na8cwz21nnjlixysfk5lymnf65d1nqkbgacc1mm4g")
 
     # required by aioesphomeapi
-    (self: super: {
-      protobuf = super.protobuf.override {
+    (final: prev: {
+      protobuf = prev.protobuf.override {
         protobuf = protobuf3_6;
       };
     })
 
     # hass-frontend does not exist in python3.pkgs
-    (self: super: {
-      hass-frontend = self.callPackage ./frontend.nix { };
+    (final: prev: {
+      hass-frontend = final.callPackage ./frontend.nix { };
     })
   ];
 
   mkOverride = attrname: version: sha256:
-    self: super: {
-      ${attrname} = super.${attrname}.overridePythonAttrs (oldAttrs: {
+    final: prev: {
+      ${attrname} = prev.${attrname}.overridePythonAttrs (oldAttrs: {
         inherit version;
         src = oldAttrs.src.override {
           inherit version sha256;
@@ -57,7 +57,7 @@ let
 
   py = python3.override {
     # Put packageOverrides at the start so they are applied after defaultOverrides
-    packageOverrides = lib.foldr lib.composeExtensions (self: super: { }) ([ packageOverrides ] ++ defaultOverrides);
+    packageOverrides = lib.foldr lib.composeExtensions (final: prev: { }) ([ packageOverrides ] ++ defaultOverrides);
   };
 
   componentPackages = import ./component-packages.nix;

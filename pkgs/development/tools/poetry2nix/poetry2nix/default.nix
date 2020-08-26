@@ -21,7 +21,7 @@ let
   # Experimental withPlugins functionality
   toPluginAble = (import ./plugins.nix { inherit pkgs lib; }).toPluginAble;
 in
-lib.makeScope pkgs.newScope (self: {
+lib.makeScope pkgs.newScope (final: {
 
   # Poetry2nix version
   version = "1.12.0";
@@ -33,7 +33,7 @@ lib.makeScope pkgs.newScope (self: {
     { projectDir ? null
     , pyproject ? projectDir + "/pyproject.toml"
     , poetrylock ? projectDir + "/poetry.lock"
-    , overrides ? self.defaultPoetryOverrides
+    , overrides ? final.defaultPoetryOverrides
     , python ? pkgs.python3
     , pwd ? projectDir
     , preferWheels ? false
@@ -71,21 +71,21 @@ lib.makeScope pkgs.newScope (self: {
       #
       # We need to avoid mixing multiple versions of pythonPackages in the same
       # closure as python can only ever have one version of a dependency
-      baseOverlay = self: super:
+      baseOverlay = final: prev:
         let
-          getDep = depName: self.${depName};
+          getDep = depName: final.${depName};
           lockPkgs = builtins.listToAttrs (
             builtins.map
               (
                 pkgMeta: rec {
                   name = moduleName pkgMeta.name;
-                  value = self.mkPoetryDep (
+                  value = final.mkPoetryDep (
                     pkgMeta // {
                       inherit pwd preferWheels;
                       inherit __isBootstrap;
                       source = pkgMeta.source or null;
                       files = lockFiles.${name};
-                      pythonPackages = self;
+                      pythonPackages = final;
                       sourceSpec = pyProject.tool.poetry.dependencies.${name} or pyProject.tool.poetry.dev-dependencies.${name} or { };
                     }
                   );
@@ -100,32 +100,32 @@ lib.makeScope pkgs.newScope (self: {
         (
           [
             (
-              self: super:
+              final: prev:
                 let
-                  hooks = self.callPackage ./hooks { };
+                  hooks = final.callPackage ./hooks { };
                 in
                 {
-                  mkPoetryDep = self.callPackage ./mk-poetry-dep.nix {
+                  mkPoetryDep = final.callPackage ./mk-poetry-dep.nix {
                     inherit pkgs lib python poetryLib;
                   };
                   poetry = poetryPkg;
                   # The canonical name is setuptools-scm
-                  setuptools-scm = super.setuptools_scm;
+                  setuptools-scm = prev.setuptools_scm;
 
-                  __toPluginAble = toPluginAble self;
+                  __toPluginAble = toPluginAble final;
 
                   inherit (hooks) pipBuildHook removePathDependenciesHook poetry2nixFixupHook wheelUnpackHook;
                 }
             )
             # Null out any filtered packages, we don't want python.pkgs from nixpkgs
-            (self: super: builtins.listToAttrs (builtins.map (x: { name = moduleName x.name; value = null; }) incompatible))
+            (final: prev: builtins.listToAttrs (builtins.map (x: { name = moduleName x.name; value = null; }) incompatible))
             # Create poetry2nix layer
             baseOverlay
           ] ++ # User provided overrides
           (if builtins.typeOf overrides == "list" then overrides else [ overrides ])
         );
-      packageOverrides = lib.foldr lib.composeExtensions (self: super: { }) overlays;
-      py = python.override { inherit packageOverrides; self = py; };
+      packageOverrides = lib.foldr lib.composeExtensions (final: prev: { }) overlays;
+      py = python.override { inherit packageOverrides; final = py; };
     in
     {
       python = py;
@@ -145,7 +145,7 @@ lib.makeScope pkgs.newScope (self: {
     { projectDir ? null
     , pyproject ? projectDir + "/pyproject.toml"
     , poetrylock ? projectDir + "/poetry.lock"
-    , overrides ? self.defaultPoetryOverrides
+    , overrides ? final.defaultPoetryOverrides
     , pwd ? projectDir
     , python ? pkgs.python3
     , preferWheels ? false
@@ -153,7 +153,7 @@ lib.makeScope pkgs.newScope (self: {
     , editablePackageSources ? { }
     }:
     let
-      py = self.mkPoetryPackages (
+      py = final.mkPoetryPackages (
         {
           inherit pyproject poetrylock overrides python pwd preferWheels;
         }
@@ -191,10 +191,10 @@ lib.makeScope pkgs.newScope (self: {
   */
   mkPoetryApplication =
     { projectDir ? null
-    , src ? self.cleanPythonSources { src = projectDir; }
+    , src ? final.cleanPythonSources { src = projectDir; }
     , pyproject ? projectDir + "/pyproject.toml"
     , poetrylock ? projectDir + "/poetry.lock"
-    , overrides ? self.defaultPoetryOverrides
+    , overrides ? final.defaultPoetryOverrides
     , meta ? { }
     , python ? pkgs.python3
     , pwd ? projectDir
@@ -203,7 +203,7 @@ lib.makeScope pkgs.newScope (self: {
     , ...
     }@attrs:
     let
-      poetryPython = self.mkPoetryPackages {
+      poetryPython = final.mkPoetryPackages {
         inherit pyproject poetrylock overrides python pwd preferWheels __isBootstrap;
       };
       py = poetryPython.python;
@@ -291,7 +291,7 @@ lib.makeScope pkgs.newScope (self: {
   /* Poetry2nix CLI used to supplement SHA-256 hashes for git dependencies  */
   cli = import ./cli.nix {
     inherit pkgs lib;
-    inherit (self) version;
+    inherit (final) version;
   };
 
   # inherit mkPoetryEnv mkPoetryApplication mkPoetryPackages;
@@ -309,18 +309,18 @@ lib.makeScope pkgs.newScope (self: {
       let
         composed = lib.foldr lib.composeExtensions overlay [ defaults ];
       in
-      self.mkDefaultPoetryOverrides composed;
+      final.mkDefaultPoetryOverrides composed;
 
     overrideOverlay = fn:
       let
-        overlay = self: super:
+        overlay = final: prev:
           let
-            defaultSet = defaults self super;
-            customSet = fn self super;
+            defaultSet = defaults final prev;
+            customSet = fn final prev;
           in
           defaultSet // customSet;
       in
-      self.mkDefaultPoetryOverrides overlay;
+      final.mkDefaultPoetryOverrides overlay;
   };
 
   /*
@@ -328,7 +328,7 @@ lib.makeScope pkgs.newScope (self: {
 
   Can be overriden by calling defaultPoetryOverrides.overrideOverlay which takes an overlay function
   */
-  defaultPoetryOverrides = self.mkDefaultPoetryOverrides (import ./overrides.nix { inherit pkgs lib; });
+  defaultPoetryOverrides = final.mkDefaultPoetryOverrides (import ./overrides.nix { inherit pkgs lib; });
 
   /*
   Convenience functions for specifying overlays with or without the poerty2nix default overrides
@@ -346,7 +346,7 @@ lib.makeScope pkgs.newScope (self: {
     combining it with poetry2nix default overrides
     */
     withDefaults = overlay: [
-      self.defaultPoetryOverrides
+      final.defaultPoetryOverrides
       overlay
     ];
   };

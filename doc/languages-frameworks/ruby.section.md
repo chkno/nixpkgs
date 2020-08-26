@@ -245,8 +245,8 @@ And finally via overlays:
 let
   pkgs = import <nixpkgs> {
     overlays = [
-      (self: super: {
-        defaultGemConfig = super.defaultGemConfig // {
+      (final: prev: {
+        defaultGemConfig = prev.defaultGemConfig // {
           pg = attrs: {
             buildFlags = [
               "--with-pg-config=${

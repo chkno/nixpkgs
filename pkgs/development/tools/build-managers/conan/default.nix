@@ -13,22 +13,22 @@
 # (e.g. from changelogs) that they are compatible.
 
 let newPython = python3.override {
-  packageOverrides = self: super: {
-    distro = super.distro.overridePythonAttrs (oldAttrs: rec {
+  packageOverrides = final: prev: {
+    distro = prev.distro.overridePythonAttrs (oldAttrs: rec {
       version = "1.1.0";
       src = oldAttrs.src.override {
         inherit version;
         sha256 = "1vn1db2akw98ybnpns92qi11v94hydwp130s8753k6ikby95883j";
       };
     });
-    node-semver = super.node-semver.overridePythonAttrs (oldAttrs: rec {
+    node-semver = prev.node-semver.overridePythonAttrs (oldAttrs: rec {
       version = "0.6.1";
       src = oldAttrs.src.override {
         inherit version;
         sha256 = "1dv6mjsm67l1razcgmq66riqmsb36wns17mnipqr610v0z0zf5j0";
       };
     });
-    pluginbase = super.pluginbase.overridePythonAttrs (oldAttrs: rec {
+    pluginbase = prev.pluginbase.overridePythonAttrs (oldAttrs: rec {
       version = "0.7";
       src = oldAttrs.src.override {
         inherit version;

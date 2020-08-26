@@ -1,7 +1,7 @@
 { stdenv
 , fetchurl
 , python-setup-hook
-, self
+, final
 , which
 # Dependencies
 , bzip2
@@ -12,7 +12,7 @@
 , tcl-8_5
 , tk-8_5
 # For the Python package set
-, packageOverrides ? (self: super: {})
+, packageOverrides ? (final: prev: {})
 , sourceVersion
 , pythonVersion
 , sha256
@@ -27,11 +27,11 @@ with stdenv.lib;
 let
   isPy3k = majorVersion == "3";
   passthru = passthruFun {
-    inherit self sourceVersion pythonVersion packageOverrides;
+    inherit final sourceVersion pythonVersion packageOverrides;
     implementation = "pypy";
     libPrefix = "pypy${pythonVersion}";
     executable = "pypy${if isPy3k then "3" else ""}";
-    pythonForBuild = self; # Not possible to cross-compile with.
+    pythonForBuild = final; # Not possible to cross-compile with.
     sitePackages = "site-packages";
     hasDistutilsCxxPatch = false;
   };

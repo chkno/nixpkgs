@@ -14,12 +14,12 @@ let
   };
 
   curry-frontend = (haskellPackages.override {
-    overrides = self: super: {
-      curry-base = haskell.lib.overrideCabal (super.callPackage ./curry-base.nix {}) (drv: {
+    overrides = final: prev: {
+      curry-base = haskell.lib.overrideCabal (prev.callPackage ./curry-base.nix {}) (drv: {
         inherit src;
         postUnpack = "sourceRoot+=/frontend/curry-base";
       });
-      curry-frontend = haskell.lib.overrideCabal (super.callPackage ./curry-frontend.nix {}) (drv: {
+      curry-frontend = haskell.lib.overrideCabal (prev.callPackage ./curry-frontend.nix {}) (drv: {
         inherit src;
         postUnpack = "sourceRoot+=/frontend/curry-frontend";
       });

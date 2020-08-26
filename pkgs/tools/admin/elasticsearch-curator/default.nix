@@ -2,8 +2,8 @@
 
 let
 py = python.override {
-  packageOverrides = self: super: {
-    click = super.click.overridePythonAttrs (oldAttrs: rec {
+  packageOverrides = final: prev: {
+    click = prev.click.overridePythonAttrs (oldAttrs: rec {
       version = "6.7";
       src = oldAttrs.src.override {
         inherit version;

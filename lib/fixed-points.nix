@@ -4,9 +4,9 @@ rec {
   # attribute set that expects its final, non-recursive representation as an
   # argument:
   #
-  #     f = self: { foo = "foo"; bar = "bar"; foobar = self.foo + self.bar; }
+  #     f = final: { foo = "foo"; bar = "bar"; foobar = final.foo + final.bar; }
   #
-  # Nix evaluates this recursion until all references to `self` have been
+  # Nix evaluates this recursion until all references to `final` have been
   # resolved. At that point, the final result is returned and `f x = x` holds:
   #
   #     nix-repl> fix f
@@ -38,14 +38,14 @@ rec {
       else converge f x';
 
   # Modify the contents of an explicitly recursive attribute set in a way that
-  # honors `self`-references. This is accomplished with a function
+  # honors `final`-references. This is accomplished with a function
   #
-  #     g = self: super: { foo = super.foo + " + "; }
+  #     g = final: prev: { foo = prev.foo + " + "; }
   #
-  # that has access to the unmodified input (`super`) as well as the final
-  # non-recursive representation of the attribute set (`self`). `extends`
+  # that has access to the unmodified input (`prev`) as well as the final
+  # non-recursive representation of the attribute set (`final`). `extends`
   # differs from the native `//` operator insofar as that it's applied *before*
-  # references to `self` are resolved:
+  # references to `final` are resolved:
   #
   #     nix-repl> fix (extends g f)
   #     { bar = "bar"; foo = "foo + "; foobar = "foo + bar"; }
@@ -60,36 +60,36 @@ rec {
   # point (the desired packages set) lets just see, how `extends g f`
   # unfolds with `g` and `f` defined above:
   #
-  # extends g f = self: let super = f self; in super // g self super;
-  #             = self: let super = { foo = "foo"; bar = "bar"; foobar = self.foo + self.bar; }; in super // g self super
-  #             = self: { foo = "foo"; bar = "bar"; foobar = self.foo + self.bar; } // g self { foo = "foo"; bar = "bar"; foobar = self.foo + self.bar; }
-  #             = self: { foo = "foo"; bar = "bar"; foobar = self.foo + self.bar; } // { foo = "foo" + " + "; }
-  #             = self: { foo = "foo + "; bar = "bar"; foobar = self.foo + self.bar; }
+  # extends g f = final: let prev = f final; in prev // g final prev;
+  #             = final: let prev = { foo = "foo"; bar = "bar"; foobar = final.foo + final.bar; }; in prev // g final prev
+  #             = final: { foo = "foo"; bar = "bar"; foobar = final.foo + final.bar; } // g final { foo = "foo"; bar = "bar"; foobar = final.foo + final.bar; }
+  #             = final: { foo = "foo"; bar = "bar"; foobar = final.foo + final.bar; } // { foo = "foo" + " + "; }
+  #             = final: { foo = "foo + "; bar = "bar"; foobar = final.foo + final.bar; }
   #
-  extends = f: rattrs: self: let super = rattrs self; in super // f self super;
+  extends = f: rattrs: final: let prev = rattrs final; in prev // f final prev;
 
   # Compose two extending functions of the type expected by 'extends'
   # into one where changes made in the first are available in the
-  # 'super' of the second
+  # 'prev' of the second
   composeExtensions =
-    f: g: self: super:
-      let fApplied = f self super;
-          super' = super // fApplied;
-      in fApplied // g self super';
+    f: g: final: prev:
+      let fApplied = f final prev;
+          prev' = prev // fApplied;
+      in fApplied // g final prev';
 
   # Create an overridable, recursive attribute set. For example:
   #
-  #     nix-repl> obj = makeExtensible (self: { })
+  #     nix-repl> obj = makeExtensible (final: { })
   #
   #     nix-repl> obj
   #     { __unfix__ = «lambda»; extend = «lambda»; }
   #
-  #     nix-repl> obj = obj.extend (self: super: { foo = "foo"; })
+  #     nix-repl> obj = obj.extend (final: prev: { foo = "foo"; })
   #
   #     nix-repl> obj
   #     { __unfix__ = «lambda»; extend = «lambda»; foo = "foo"; }
   #
-  #     nix-repl> obj = obj.extend (self: super: { foo = super.foo + " + "; bar = "bar"; foobar = self.foo + self.bar; })
+  #     nix-repl> obj = obj.extend (final: prev: { foo = prev.foo + " + "; bar = "bar"; foobar = final.foo + final.bar; })
   #
   #     nix-repl> obj
   #     { __unfix__ = «lambda»; bar = "bar"; extend = «lambda»; foo = "foo + "; foobar = "foo + bar"; }

@@ -7,12 +7,12 @@ let
   fetchElmDeps = import ./fetchElmDeps.nix { inherit stdenv lib fetchurl; };
 
   hsPkgs = haskell.packages.ghc883.override {
-    overrides = self: super: with haskell.lib;
+    overrides = final: prev: with haskell.lib;
       let elmPkgs = rec {
-            elm = overrideCabal (self.callPackage ./packages/elm.nix { }) (drv: {
+            elm = overrideCabal (final.callPackage ./packages/elm.nix { }) (drv: {
               # sadly with parallelism most of the time breaks compilation
               enableParallelBuilding = false;
-              preConfigure = self.fetchElmDeps {
+              preConfigure = final.fetchElmDeps {
                 elmPackages = (import ./packages/elm-srcs.nix);
                 elmVersion = drv.version;
                 registryDat = ./registry.dat;
@@ -29,7 +29,7 @@ let
             The elm-format expression is updated via a script in the https://github.com/avh4/elm-format repo:
             `package/nix/build.sh`
             */
-            elm-format = justStaticExecutables (overrideCabal (self.callPackage ./packages/elm-format.nix {}) (drv: {
+            elm-format = justStaticExecutables (overrideCabal (final.callPackage ./packages/elm-format.nix {}) (drv: {
               # GHC 8.8.3 support
               # https://github.com/avh4/elm-format/pull/640
               patches = [(
@@ -45,7 +45,7 @@ let
               jailbreak = true;
             }));
 
-            elmi-to-json = justStaticExecutables (overrideCabal (self.callPackage ./packages/elmi-to-json.nix {}) (drv: {
+            elmi-to-json = justStaticExecutables (overrideCabal (final.callPackage ./packages/elmi-to-json.nix {}) (drv: {
               prePatch = ''
                 substituteInPlace package.yaml --replace "- -Werror" ""
                 hpack
@@ -53,7 +53,7 @@ let
               jailbreak = true;
             }));
 
-            elm-instrument = justStaticExecutables (overrideCabal (self.callPackage ./packages/elm-instrument.nix {}) (drv: {
+            elm-instrument = justStaticExecutables (overrideCabal (final.callPackage ./packages/elm-instrument.nix {}) (drv: {
               prePatch = ''
                 sed "s/desc <-.*/let desc = \"${drv.version}\"/g" Setup.hs --in-place
               '';
@@ -69,7 +69,7 @@ let
         inherit elmPkgs;
 
         # Needed for elm-format
-        indents = self.callPackage ./packages/indents.nix {};
+        indents = final.callPackage ./packages/indents.nix {};
       };
   };
 

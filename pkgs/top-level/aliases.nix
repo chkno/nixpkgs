@@ -1,6 +1,6 @@
-lib: self: super:
+lib: final: prev:
 
-with self;
+with final;
 
 let
   # Removing recurseForDerivation prevents derivations of aliased attribute
@@ -19,7 +19,7 @@ let
 
   # Make sure that we are not shadowing something from
   # all-packages.nix.
-  checkInPkgs = n: alias: if builtins.hasAttr n super
+  checkInPkgs = n: alias: if builtins.hasAttr n prev
                           then throw "Alias ${n} is still in all-packages.nix"
                           else alias;
 
@@ -319,7 +319,7 @@ mapAliases ({
   msf = metasploit; # added 2018-04-25
   libmsgpack = msgpack; # added 2018-08-17
   mssys = ms-sys; # added 2015-12-13
-  mpv-with-scripts = self.wrapMpv self.mpv-unwrapped { }; # added 2020-05-22
+  mpv-with-scripts = final.wrapMpv final.mpv-unwrapped { }; # added 2020-05-22
   multipath_tools = multipath-tools;  # added 2016-01-21
   mupen64plus1_5 = mupen64plus; # added 2016-02-12
   mysqlWorkbench = mysql-workbench; # added 2017-01-19
@@ -669,7 +669,7 @@ mapAliases ({
   # forceSystem should not be used directly in Nixpkgs.
   # added 2018-07-16
   forceSystem = system: _:
-    (import self.path { localSystem = { inherit system; }; });
+    (import final.path { localSystem = { inherit system; }; });
   callPackage_i686 = pkgsi686Linux.callPackage;
 
   inherit (ocaml-ng) # added 2016-09-14

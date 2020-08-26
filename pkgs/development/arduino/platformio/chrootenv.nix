@@ -4,8 +4,8 @@ let
   pio-pkgs = pkgs:
     let
       python = pkgs.python3.override {
-        packageOverrides = self: super: {
-          platformio = self.callPackage ./core.nix { };
+        packageOverrides = final: prev: {
+          platformio = final.callPackage ./core.nix { };
         };
       };
     in (with pkgs; [

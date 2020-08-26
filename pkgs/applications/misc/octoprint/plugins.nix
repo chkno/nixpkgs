@@ -2,11 +2,11 @@
 
 with pkgs;
 
-self: super: let
-  buildPlugin = args: self.buildPythonPackage (args // {
+final: prev: let
+  buildPlugin = args: final.buildPythonPackage (args // {
     pname = "OctoPrintPlugin-${args.pname}";
     inherit (args) version;
-    propagatedBuildInputs = (args.propagatedBuildInputs or []) ++ [ super.octoprint ];
+    propagatedBuildInputs = (args.propagatedBuildInputs or []) ++ [ prev.octoprint ];
     # none of the following have tests
     doCheck = false;
   });
@@ -14,7 +14,7 @@ in {
   inherit buildPlugin;
 
   # Deprecated alias
-  m3d-fio = self.m33-fio; # added 2016-08-13
+  m3d-fio = final.m33-fio; # added 2016-08-13
 
   m33-fio = buildPlugin rec {
     pname = "M33-Fio";
@@ -58,7 +58,7 @@ in {
       sha256 = "0y1jnfplcy8mh3szrfbbvngl02j49cbdizglrfsry4fvqg50zjxd";
     };
 
-    propagatedBuildInputs = with super; [ paho-mqtt ];
+    propagatedBuildInputs = with prev; [ paho-mqtt ];
 
     meta = with stdenv.lib; {
       description = "Publish printer status MQTT";

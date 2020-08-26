@@ -117,8 +117,8 @@ cp ${myEmacsConfig} $out/share/emacs/site-lisp/default.el
   </para>
 
 <screen>
-overrides = self: super: rec {
-  haskell-mode = self.melpaPackages.haskell-mode;
+overrides = final: prev: rec {
+  haskell-mode = final.melpaPackages.haskell-mode;
   ...
 };
 ((emacsPackagesGen emacs).overrideScope' overrides).emacsWithPackages (p: with p; [

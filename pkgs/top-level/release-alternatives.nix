@@ -63,17 +63,17 @@ in
       pkgs = pkgsFun {
         config = { inherit allowUnfree; };
         system = system';
-        overlays = [(self: super: {
-          lapack = super.lapack.override {
+        overlays = [(final: prev: {
+          lapack = prev.lapack.override {
             lapackProvider = if provider == "mkl64"
-                             then super.mkl
-                             else builtins.getAttr provider super;
+                             then prev.mkl
+                             else builtins.getAttr provider prev;
             inherit isILP64;
           };
-          blas = super.blas.override {
+          blas = prev.blas.override {
             blasProvider = if provider == "mkl64"
-                           then super.mkl
-                           else builtins.getAttr provider super;
+                           then prev.mkl
+                           else builtins.getAttr provider prev;
             inherit isILP64;
           };
         })];

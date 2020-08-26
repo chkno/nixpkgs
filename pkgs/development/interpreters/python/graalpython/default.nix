@@ -2,13 +2,13 @@
 , lib
 , graalvm8
 , passthruFun
-, packageOverrides ? (self: super: {})
-, self
+, packageOverrides ? (final: prev: {})
+, final
 }:
 
 let
   passthru = passthruFun {
-    inherit self packageOverrides;
+    inherit final packageOverrides;
     implementation = "graal";
     sourceVersion = graalvm8.version;
     pythonVersion = "3.7";

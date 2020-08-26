@@ -2,7 +2,7 @@
 
 with haskellLib;
 
-self: super:
+final: prev:
 let
   # This contains updates to the dependencies, without which it would
   # be even more work to get it to build.
@@ -21,18 +21,18 @@ let
       .overrideAttrs (_oldAttrs: {sourceRoot = "source/${dir}";});
 in
 {
-  tensorflow-proto = doJailbreak (setTensorflowSourceRoot "tensorflow-proto" super.tensorflow-proto);
+  tensorflow-proto = doJailbreak (setTensorflowSourceRoot "tensorflow-proto" prev.tensorflow-proto);
 
-  tensorflow = (setTensorflowSourceRoot "tensorflow" super.tensorflow).override {
+  tensorflow = (setTensorflowSourceRoot "tensorflow" prev.tensorflow).override {
     # the "regular" Python package does not seem to include the binary library
     libtensorflow = pkgs.libtensorflow-bin;
   };
 
-  tensorflow-core-ops = setTensorflowSourceRoot "tensorflow-core-ops" super.tensorflow-core-ops;
+  tensorflow-core-ops = setTensorflowSourceRoot "tensorflow-core-ops" prev.tensorflow-core-ops;
 
-  tensorflow-logging = setTensorflowSourceRoot "tensorflow-logging" super.tensorflow-logging;
+  tensorflow-logging = setTensorflowSourceRoot "tensorflow-logging" prev.tensorflow-logging;
 
-  tensorflow-opgen = setTensorflowSourceRoot "tensorflow-opgen" super.tensorflow-opgen;
+  tensorflow-opgen = setTensorflowSourceRoot "tensorflow-opgen" prev.tensorflow-opgen;
 
-  tensorflow-ops = setTensorflowSourceRoot "tensorflow-ops" super.tensorflow-ops;
+  tensorflow-ops = setTensorflowSourceRoot "tensorflow-ops" prev.tensorflow-ops;
 }

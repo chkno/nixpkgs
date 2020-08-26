@@ -3,10 +3,10 @@
 let
 
   python = let
-    packageOverrides = self: super: {
-      typeddep = super.callPackage ./typeddep {};
+    packageOverrides = final: prev: {
+      typeddep = prev.callPackage ./typeddep {};
     };
-  in interpreter.override {inherit packageOverrides; self = python;};
+  in interpreter.override {inherit packageOverrides; final = python;};
 
   pythonEnv = python.withPackages(ps: [
     ps.typeddep

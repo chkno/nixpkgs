@@ -6,8 +6,8 @@
 }:
 let
   py = python3.override {
-    packageOverrides = self: super: {
-      botocore = super.botocore.overridePythonAttrs (oldAttrs: rec {
+    packageOverrides = final: prev: {
+      botocore = prev.botocore.overridePythonAttrs (oldAttrs: rec {
         version = "2.0.0dev40";
         src = fetchFromGitHub {
           owner = "boto";
@@ -16,7 +16,7 @@ let
           sha256 = "1ffx86m3b592kj331800qbcz5f532z8kzf1wmd04i4bfiqvqn4h8";
         };
       });
-      prompt_toolkit = super.prompt_toolkit.overridePythonAttrs (oldAttrs: rec {
+      prompt_toolkit = prev.prompt_toolkit.overridePythonAttrs (oldAttrs: rec {
         version = "2.0.10";
         src = oldAttrs.src.override {
           inherit version;

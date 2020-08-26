@@ -1,8 +1,8 @@
 { pkgs, stdenv, lib, haskellLib, ghc, all-cabal-hashes
 , buildHaskellPackages
-, compilerConfig ? (self: super: {})
-, packageSetConfig ? (self: super: {})
-, overrides ? (self: super: {})
+, compilerConfig ? (final: prev: {})
+, packageSetConfig ? (final: prev: {})
+, overrides ? (final: prev: {})
 , initialPackages ? import ./initial-packages.nix
 , nonHackagePackages ? import ./non-hackage-packages.nix
 , configurationCommon ? import ./configuration-common.nix
@@ -16,13 +16,13 @@ let
 
   haskellPackages = pkgs.callPackage makePackageSet {
     package-set = initialPackages;
-    inherit stdenv haskellLib ghc buildHaskellPackages extensible-self all-cabal-hashes;
+    inherit stdenv haskellLib ghc buildHaskellPackages extensible-final all-cabal-hashes;
   };
 
   commonConfiguration = configurationCommon { inherit pkgs haskellLib; };
   nixConfiguration = configurationNix { inherit pkgs haskellLib; };
 
-  extensible-self = makeExtensible
+  extensible-final = makeExtensible
     (extends overrides
       (extends packageSetConfig
         (extends compilerConfig
@@ -33,4 +33,4 @@ let
 
 in
 
-  extensible-self
+  extensible-final

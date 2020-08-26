@@ -5,9 +5,9 @@ nixpkgs$ maintainers/scripts/update-luarocks-packages pkgs/development/lua-modul
 
 These packages are manually refined in lua-overrides.nix
 */
-{ self, stdenv, fetchurl, fetchgit, pkgs, ... } @ args:
-self: super:
-with self;
+{ final, stdenv, fetchurl, fetchgit, pkgs, ... } @ args:
+final: prev:
+with final;
 {
 
 alt-getopt = buildLuarocksPackage {

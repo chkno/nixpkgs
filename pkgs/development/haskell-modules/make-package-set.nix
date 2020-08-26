@@ -23,16 +23,16 @@
   ghc
 
 , # A function that takes `{ pkgs, stdenv, callPackage }` as the first arg and
-  # `self` as second, and returns a set of haskell packages
+  # `final` as second, and returns a set of haskell packages
   package-set
 
 , # The final, fully overriden package set usable with the nixpkgs fixpoint
   # overriding functionality
-  extensible-self
+  extensible-final
 }:
 
-# return value: a function from self to the package set
-self:
+# return value: a function from final to the package set
+final:
 
 let
   inherit (stdenv) buildPlatform hostPlatform;
@@ -43,16 +43,16 @@ let
   mkDerivationImpl = pkgs.callPackage ./generic-builder.nix {
     inherit stdenv;
     nodejs = buildPackages.nodejs-slim;
-    inherit (self) buildHaskellPackages ghc ghcWithHoogle ghcWithPackages;
-    inherit (self.buildHaskellPackages) jailbreak-cabal;
-    hscolour = overrideCabal self.buildHaskellPackages.hscolour (drv: {
+    inherit (final) buildHaskellPackages ghc ghcWithHoogle ghcWithPackages;
+    inherit (final.buildHaskellPackages) jailbreak-cabal;
+    hscolour = overrideCabal final.buildHaskellPackages.hscolour (drv: {
       isLibrary = false;
       doHaddock = false;
       hyperlinkSource = false;      # Avoid depending on hscolour for this build.
       postFixup = "rm -rf $out/lib $out/share $out/nix-support";
     });
-    cpphs = overrideCabal (self.cpphs.overrideScope (self: super: {
-      mkDerivation = drv: super.mkDerivation (drv // {
+    cpphs = overrideCabal (final.cpphs.overrideScope (final: prev: {
+      mkDerivation = drv: prev.mkDerivation (drv // {
         enableSharedExecutables = false;
         enableSharedLibraries = false;
         doHaddock = false;
@@ -110,11 +110,11 @@ let
         inherit (scope) ghc buildHaskellPackages;
       };
     in ps // ps.xorg // ps.gnome2 // { inherit stdenv; } // scopeSpliced;
-  defaultScope = mkScope self;
+  defaultScope = mkScope final;
   callPackage = drv: args: callPackageWithScope defaultScope drv args;
 
   withPackages = packages: buildPackages.callPackage ./with-packages-wrapper.nix {
-    inherit (self) ghc llvmPackages;
+    inherit (final) ghc llvmPackages;
     inherit packages;
   };
 
@@ -133,7 +133,7 @@ let
       installPhase = ''
         export HOME="$TMP"
         mkdir -p "$out"
-        cabal2nix --compiler=${self.ghc.haskellCompilerName} --system=${hostPlatform.config} ${sha256Arg} "${src}" ${extraCabal2nixOptions} > "$out/default.nix"
+        cabal2nix --compiler=${final.ghc.haskellCompilerName} --system=${hostPlatform.config} ${sha256Arg} "${src}" ${extraCabal2nixOptions} > "$out/default.nix"
       '';
   };
 
@@ -143,7 +143,7 @@ let
     mv */${name}/${version}/${name}.{json,cabal} $out
   '';
 
-  hackage2nix = name: version: let component = all-cabal-hashes-component name version; in self.haskellSrc2nix {
+  hackage2nix = name: version: let component = all-cabal-hashes-component name version; in final.haskellSrc2nix {
     name   = "${name}-${version}";
     sha256 = ''$(sed -e 's/.*"SHA256":"//' -e 's/".*$//' "${component}/${name}.json")'';
     src    = "${component}/${name}.cabal";
@@ -155,7 +155,7 @@ let
   # (requiring it to be frequently rebuilt), which can be an
   # annoyance.
   callPackageKeepDeriver = src: args:
-    overrideCabal (self.callPackage src args) (orig: {
+    overrideCabal (final.callPackage src args) (orig: {
       preConfigure = ''
         # Generated from ${src}
         ${orig.preConfigure or ""}
@@ -169,7 +169,7 @@ let
       };
     });
 
-in package-set { inherit pkgs stdenv callPackage; } self // {
+in package-set { inherit pkgs stdenv callPackage; } final // {
 
     inherit mkDerivation callPackage haskellSrc2nix hackage2nix buildHaskellPackages;
 
@@ -178,8 +178,8 @@ in package-set { inherit pkgs stdenv callPackage; } self // {
     # callHackage :: Text -> Text -> AttrSet -> HaskellPackage
     #
     # e.g., while overriding a package set:
-    #    '... foo = self.callHackage "foo" "1.5.3" {}; ...'
-    callHackage = name: version: callPackageKeepDeriver (self.hackage2nix name version);
+    #    '... foo = final.callHackage "foo" "1.5.3" {}; ...'
+    callHackage = name: version: callPackageKeepDeriver (final.hackage2nix name version);
 
     # callHackageDirect
     #   :: { pkg :: Text, ver :: Text, sha256 :: Text }
@@ -192,7 +192,7 @@ in package-set { inherit pkgs stdenv callPackage; } self // {
     # to be currently using.
     callHackageDirect = {pkg, ver, sha256}:
       let pkgver = "${pkg}-${ver}";
-      in self.callCabal2nix pkg (pkgs.fetchzip {
+      in final.callCabal2nix pkg (pkgs.fetchzip {
            url = "mirror://hackage/${pkgver}/${pkgver}.tar.gz";
            inherit sha256;
          });
@@ -203,7 +203,7 @@ in package-set { inherit pkgs stdenv callPackage; } self // {
         filter = path: type:
                    pkgs.lib.hasSuffix "${name}.cabal" path ||
                    baseNameOf path == "package.yaml";
-        expr = self.haskellSrc2nix {
+        expr = final.haskellSrc2nix {
           inherit name extraCabal2nixOptions;
           src = if pkgs.lib.canCleanSource src
                   then pkgs.lib.cleanSourceWith { inherit src filter; }
@@ -213,7 +213,7 @@ in package-set { inherit pkgs stdenv callPackage; } self // {
            inherit src;
          });
 
-    callCabal2nix = name: src: args: self.callCabal2nixWithOptions name src "" args;
+    callCabal2nix = name: src: args: final.callCabal2nixWithOptions name src "" args;
 
     # : { root : Path
     #   , name : Defaulted String
@@ -232,22 +232,22 @@ in package-set { inherit pkgs stdenv callPackage; } self // {
       { root
       , name ? builtins.baseNameOf root
       , source-overrides ? {}
-      , overrides ? self: super: {}
+      , overrides ? final: prev: {}
       , modifier ? drv: drv
       , returnShellEnv ? pkgs.lib.inNixShell }:
       let drv =
-        (extensible-self.extend
+        (extensible-final.extend
            (pkgs.lib.composeExtensions
-              (self.packageSourceOverrides source-overrides)
+              (final.packageSourceOverrides source-overrides)
               overrides))
         .callCabal2nix name root {};
       in if returnShellEnv then (modifier drv).env else modifier drv;
 
-    ghcWithPackages = selectFrom: withPackages (selectFrom self);
+    ghcWithPackages = selectFrom: withPackages (selectFrom final);
 
     ghcWithHoogle = selectFrom:
       let
-        packages = selectFrom self;
+        packages = selectFrom final;
         hoogle = callPackage ./hoogle.nix {
           inherit packages;
         };
@@ -289,7 +289,7 @@ in package-set { inherit pkgs stdenv callPackage; } self // {
       let
         combinedPackageFor = packages:
           let
-            selected = packages self;
+            selected = packages final;
 
             pname = if pkgs.lib.length selected == 1
               then (pkgs.lib.head selected).name
@@ -313,7 +313,7 @@ in package-set { inherit pkgs stdenv callPackage; } self // {
               license = null;
             } // packageInputs;
 
-          in self.mkDerivation genericBuilderArgs;
+          in final.mkDerivation genericBuilderArgs;
 
         mkDerivationArgs = builtins.removeAttrs args [ "packages" "withHoogle" ];
       in ((combinedPackageFor packages).envFunc { inherit withHoogle; }).overrideAttrs (old: mkDerivationArgs // {
@@ -322,8 +322,8 @@ in package-set { inherit pkgs stdenv callPackage; } self // {
       });
 
     ghc = ghc // {
-      withPackages = self.ghcWithPackages;
-      withHoogle = self.ghcWithHoogle;
+      withPackages = final.ghcWithPackages;
+      withHoogle = final.ghcWithHoogle;
     };
 
   }

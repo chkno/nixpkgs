@@ -21,27 +21,27 @@ set which contains `emacsWithPackages`. For example, to override
 `emacsPackages.emacsWithPackages`,
 ```
 let customEmacsPackages =
-      emacsPackages.overrideScope' (self: super: {
+      emacsPackages.overrideScope' (final: prev: {
         # use a custom version of emacs
         emacs = ...;
         # use the unstable MELPA version of magit
-        magit = self.melpaPackages.magit;
+        magit = final.melpaPackages.magit;
       });
 in customEmacsPackages.emacsWithPackages (epkgs: [ epkgs.evil epkgs.magit ])
 ```
 
 */
 
-{ lib, lndir, makeWrapper, runCommand }: self:
+{ lib, lndir, makeWrapper, runCommand }: final:
 
-with lib; let inherit (self) emacs; in
+with lib; let inherit (final) emacs; in
 
 packagesFun: # packages explicitly requested by the user
 
 let
   explicitRequires =
     if lib.isFunction packagesFun
-      then packagesFun self
+      then packagesFun final
     else packagesFun;
 in
 

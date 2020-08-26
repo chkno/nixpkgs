@@ -175,7 +175,7 @@ If the dependencies are not available on the host where `foo.py` is executed, it
 will build or download them from a Nix binary cache prior to starting up, prior
 that it is executed on a machine with a multi-user nix installation.
 
-This provides a way to ship a self bootstrapping Python script, akin to a
+This provides a way to ship a final bootstrapping Python script, akin to a
 statically linked binary, where it can be run on any machine (provided nix is
 installed) without having to assume that `numpy` is installed globally on the
 system.
@@ -278,12 +278,12 @@ that looks like this:
 
 ```nix
 # ~/.config/nixpkgs/overlays/myEnv.nix
-self: super: {
-  myEnv = super.buildEnv {
+final: prev: {
+  myEnv = prev.buildEnv {
     name = "myEnv";
     paths = [
       # A Python 3 interpreter with some packages
-      (self.python3.withPackages (
+      (final.python3.withPackages (
         ps: with ps; [
           pyflakes
           pytest
@@ -292,10 +292,10 @@ self: super: {
       ))
 
       # Some other packages we'd like as part of this env
-      self.mypy
-      self.black
-      self.ripgrep
-      self.tmux
+      final.mypy
+      final.black
+      final.ripgrep
+      final.tmux
     ];
   };
 }
@@ -937,17 +937,17 @@ with import <nixpkgs> {};
 
 (let
   python = let
-    packageOverrides = self: super: {
-      pandas = super.pandas.overridePythonAttrs(old: rec {
+    packageOverrides = final: prev: {
+      pandas = prev.pandas.overridePythonAttrs(old: rec {
         version = "0.19.1";
-        src =  super.fetchPypi {
+        src =  prev.fetchPypi {
           pname = "pandas";
           inherit version;
           sha256 = "08blshqj9zj1wyjhhw3kl2vas75vhhicvv72flvf1z3jvapgw295";
         };
       });
     };
-  in pkgs.python3.override {inherit packageOverrides; self = python;};
+  in pkgs.python3.override {inherit packageOverrides; final = python;};
 
 in python.withPackages(ps: [ps.blaze])).env
 ```
@@ -1024,7 +1024,7 @@ modifications.
 ```nix
 opencv = toPythonModule (pkgs.opencv.override {
   enablePython = true;
-  pythonPackages = self;
+  pythonPackages = final;
 });
 ```
 
@@ -1245,8 +1245,8 @@ with import <nixpkgs> {};
 
 (let
   python = let
-    packageOverrides = self: super: {
-      pandas = super.pandas.overridePythonAttrs(old: {name="foo";});
+    packageOverrides = final: prev: {
+      pandas = prev.pandas.overridePythonAttrs(old: {name="foo";});
     };
   in pkgs.python38.override {inherit packageOverrides;};
 
@@ -1267,8 +1267,8 @@ the updated `scipy` version.
 with import <nixpkgs> {};
 
 ( let
-    packageOverrides = self: super: {
-      scipy = super.scipy_0_17;
+    packageOverrides = final: prev: {
+      scipy = prev.scipy_0_17;
     };
   in (pkgs.python38.override {inherit packageOverrides;}).withPackages (ps: [ps.blaze])
 ).env
@@ -1283,12 +1283,12 @@ If you want the whole of Nixpkgs to use your modifications, then you can use
 ```nix
 let
   pkgs = import <nixpkgs> {};
-  newpkgs = import pkgs.path { overlays = [ (self: super: {
+  newpkgs = import pkgs.path { overlays = [ (final: prev: {
     python38 = let
-      packageOverrides = python-self: python-super: {
-        numpy = python-super.numpy_1_18;
+      packageOverrides = python-final: python-prev: {
+        numpy = python-prev.numpy_1_18;
       };
-    in super.python38.override {inherit packageOverrides;};
+    in prev.python38.override {inherit packageOverrides;};
   } ) ]; };
 in newpkgs.inkscape
 ```
@@ -1479,11 +1479,11 @@ folder and not downloaded again.
 If you need to change a package's attribute(s) from `configuration.nix` you could do:
 
 ```nix
-  nixpkgs.config.packageOverrides = super: {
-    python = super.python.override {
-      packageOverrides = python-self: python-super: {
-        zerobin = python-super.zerobin.overrideAttrs (oldAttrs: {
-          src = super.fetchgit {
+  nixpkgs.config.packageOverrides = prev: {
+    python = prev.python.override {
+      packageOverrides = python-final: python-prev: {
+        zerobin = python-prev.zerobin.overrideAttrs (oldAttrs: {
+          src = prev.fetchgit {
             url = "https://github.com/sametmax/0bin";
             rev = "a344dbb18fe7a855d0742b9a1cede7ce423b34ec";
             sha256 = "16d769kmnrpbdr0ph0whyf4yff5df6zi4kmwx7sz1d3r6c8p6xji";
@@ -1495,15 +1495,15 @@ If you need to change a package's attribute(s) from `configuration.nix` you coul
 ```
 
 `pythonPackages.zerobin` is now globally overridden. All packages and also the
-`zerobin` NixOS service use the new definition. Note that `python-super` refers
-to the old package set and `python-self` to the new, overridden version.
+`zerobin` NixOS service use the new definition. Note that `python-prev` refers
+to the old package set and `python-final` to the new, overridden version.
 
 To modify only a Python package set instead of a whole Python derivation, use
 this snippet:
 
 ```nix
   myPythonPackages = pythonPackages.override {
-    overrides = self: super: {
+    overrides = final: prev: {
       zerobin = ...;
     };
   }
@@ -1514,11 +1514,11 @@ this snippet:
 Use the following overlay template:
 
 ```nix
-self: super: {
-  python = super.python.override {
-    packageOverrides = python-self: python-super: {
-      zerobin = python-super.zerobin.overrideAttrs (oldAttrs: {
-        src = super.fetchgit {
+final: prev: {
+  python = prev.python.override {
+    packageOverrides = python-final: python-prev: {
+      zerobin = python-prev.zerobin.overrideAttrs (oldAttrs: {
+        src = prev.fetchgit {
           url = "https://github.com/sametmax/0bin";
           rev = "a344dbb18fe7a855d0742b9a1cede7ce423b34ec";
           sha256 = "16d769kmnrpbdr0ph0whyf4yff5df6zi4kmwx7sz1d3r6c8p6xji";

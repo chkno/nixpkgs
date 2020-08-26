@@ -7,17 +7,17 @@
 let
   version = "7.0.4";
   python = let
-    packageOverrides = self: super: {
-      markdown = super.markdown.overridePythonAttrs(old: {
-        src = super.fetchPypi {
+    packageOverrides = final: prev: {
+      markdown = prev.markdown.overridePythonAttrs(old: {
+        src = prev.fetchPypi {
           version = "3.0.1";
           pname = "Markdown";
           sha256 = "d02e0f9b04c500cde6637c11ad7c72671f359b87b9fe924b2383649d8841db7c";
         };
       });
 
-      chardet = super.chardet.overridePythonAttrs(old: {
-        src = super.fetchPypi {
+      chardet = prev.chardet.overridePythonAttrs(old: {
+        src = prev.fetchPypi {
           version = "2.3.0";
           pname = "chardet";
           sha256 = "e53e38b3a4afe6d1132de62b7400a4ac363452dc5dfcf8d88e8e0cce663c68aa";

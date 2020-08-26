@@ -128,10 +128,10 @@ in
       example = literalExample
         ''
           [
-            (self: super: {
-              openssh = super.openssh.override {
+            (final: prev: {
+              openssh = prev.openssh.override {
                 hpnSupport = true;
-                kerberos = self.libkrb5;
+                kerberos = final.libkrb5;
               };
             })
           ]

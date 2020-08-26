@@ -70,7 +70,7 @@ let
   # the bootstrap.  In all stages, we build an stdenv and the package
   # set that can be built with that stdenv.
   stageFun = prevStage:
-    { name, overrides ? (self: super: {}), extraNativeBuildInputs ? [] }:
+    { name, overrides ? (final: prev: {}), extraNativeBuildInputs ? [] }:
 
     let
 
@@ -116,7 +116,7 @@ let
           # linuxHeaders for example.
           inherit platform;
         };
-        overrides = self: super: (overrides self super) // { fetchurl = thisStdenv.fetchurlBoot; };
+        overrides = final: prev: (overrides final prev) // { fetchurl = thisStdenv.fetchurlBoot; };
       };
 
     in {
@@ -142,18 +142,18 @@ in
   (prevStage: stageFun prevStage {
     name = "bootstrap-stage0";
 
-    overrides = self: super: {
+    overrides = final: prev: {
       # We thread stage0's stdenv through under this name so downstream stages
       # can use it for wrapping gcc too. This way, downstream stages don't need
       # to refer to this stage directly, which violates the principle that each
       # stage should only access the stage that came before it.
-      ccWrapperStdenv = self.stdenv;
+      ccWrapperStdenv = final.stdenv;
       # The Glibc include directory cannot have the same prefix as the
       # GCC include directory, since GCC gets confused otherwise (it
       # will search the Glibc headers before the GCC headers).  So
       # create a dummy Glibc here, which will be used in the stdenv of
       # stage1.
-      ${localSystem.libc} = self.stdenv.mkDerivation {
+      ${localSystem.libc} = final.stdenv.mkDerivation {
         name = "bootstrap-stage0-${localSystem.libc}";
         buildCommand = ''
           mkdir -p $out
@@ -170,8 +170,8 @@ in
         nativeTools = false;
         nativeLibc = false;
         buildPackages = { };
-        libc = getLibc self;
-        inherit (self) stdenvNoCC coreutils gnugrep;
+        libc = getLibc final;
+        inherit (final) stdenvNoCC coreutils gnugrep;
         bintools = bootstrapTools;
       };
       coreutils = bootstrapTools;
@@ -194,8 +194,8 @@ in
     name = "bootstrap-stage1";
 
     # Rebuild binutils to use from stage2 onwards.
-    overrides = self: super: {
-      binutils-unwrapped = super.binutils-unwrapped.override {
+    overrides = final: prev: {
+      binutils-unwrapped = prev.binutils-unwrapped.override {
         gold = false;
       };
       inherit (prevStage)
@@ -209,7 +209,7 @@ in
       # This is not an issue for the final stdenv, because this perl
       # won't be included in the final stdenv and won't be exported to
       # top-level pkgs as an override either.
-      perl = super.perl.override { enableThreading = false; };
+      perl = prev.perl.override { enableThreading = false; };
     };
   })
 
@@ -219,29 +219,29 @@ in
   (prevStage: stageFun prevStage {
     name = "bootstrap-stage2";
 
-    overrides = self: super: {
+    overrides = final: prev: {
       inherit (prevStage)
         ccWrapperStdenv
         gcc-unwrapped coreutils gnugrep
         perl gnum4 bison;
-      dejagnu = super.dejagnu.overrideAttrs (a: { doCheck = false; } );
+      dejagnu = prev.dejagnu.overrideAttrs (a: { doCheck = false; } );
 
       # We need libidn2 and its dependency libunistring as glibc dependency.
       # To avoid the cycle, we build against bootstrap libc, nuke references,
       # and use the result as input for our final glibc.  We also pass this pair
       # through, so the final package-set uses exactly the same builds.
-      libunistring = super.libunistring.overrideAttrs (attrs: {
+      libunistring = prev.libunistring.overrideAttrs (attrs: {
         postFixup = attrs.postFixup or "" + ''
-          ${self.nukeReferences}/bin/nuke-refs "$out"/lib/lib*.so.*.*
+          ${final.nukeReferences}/bin/nuke-refs "$out"/lib/lib*.so.*.*
         '';
         # Apparently iconv won't work with bootstrap glibc, but it will be used
         # with glibc built later where we keep *this* build of libunistring,
         # so we need to trick it into supporting libiconv.
         am_cv_func_iconv_works = "yes";
       });
-      libidn2 = super.libidn2.overrideAttrs (attrs: {
+      libidn2 = prev.libidn2.overrideAttrs (attrs: {
         postFixup = attrs.postFixup or "" + ''
-          ${self.nukeReferences}/bin/nuke-refs -e '${lib.getLib self.libunistring}' \
+          ${final.nukeReferences}/bin/nuke-refs -e '${lib.getLib final.libunistring}' \
             "$out"/lib/lib*.so.*.*
         '';
       });
@@ -250,7 +250,7 @@ in
       binutils = prevStage.binutils.override {
         # Rewrap the binutils with the new glibc, so both the next
         # stage's wrappers use it.
-        libc = getLibc self;
+        libc = getLibc final;
       };
     };
   })
@@ -262,7 +262,7 @@ in
   (prevStage: stageFun prevStage {
     name = "bootstrap-stage3";
 
-    overrides = self: super: rec {
+    overrides = final: prev: rec {
       inherit (prevStage)
         ccWrapperStdenv
         binutils coreutils gnugrep
@@ -271,11 +271,11 @@ in
       # Link GCC statically against GMP etc.  This makes sense because
       # these builds of the libraries are only used by GCC, so it
       # reduces the size of the stdenv closure.
-      gmp = super.gmp.override { stdenv = self.makeStaticLibraries self.stdenv; };
-      mpfr = super.mpfr.override { stdenv = self.makeStaticLibraries self.stdenv; };
-      libmpc = super.libmpc.override { stdenv = self.makeStaticLibraries self.stdenv; };
-      isl_0_17 = super.isl_0_17.override { stdenv = self.makeStaticLibraries self.stdenv; };
-      gcc-unwrapped = super.gcc-unwrapped.override {
+      gmp = prev.gmp.override { stdenv = final.makeStaticLibraries final.stdenv; };
+      mpfr = prev.mpfr.override { stdenv = final.makeStaticLibraries final.stdenv; };
+      libmpc = prev.libmpc.override { stdenv = final.makeStaticLibraries final.stdenv; };
+      isl_0_17 = prev.isl_0_17.override { stdenv = final.makeStaticLibraries final.stdenv; };
+      gcc-unwrapped = prev.gcc-unwrapped.override {
         isl = isl_0_17;
       };
     };
@@ -291,16 +291,16 @@ in
   (prevStage: stageFun prevStage {
     name = "bootstrap-stage4";
 
-    overrides = self: super: {
+    overrides = final: prev: {
       # Zlib has to be inherited and not rebuilt in this stage,
       # because gcc (since JAR support) already depends on zlib, and
       # then if we already have a zlib we want to use that for the
       # other purposes (binutils and top-level pkgs) too.
       inherit (prevStage) gettext gnum4 bison gmp perl texinfo zlib linuxHeaders libidn2 libunistring;
       ${localSystem.libc} = getLibc prevStage;
-      binutils = super.binutils.override {
+      binutils = prev.binutils.override {
         # Don't use stdenv's shell but our own
-        shell = self.bash + "/bin/bash";
+        shell = final.bash + "/bin/bash";
         # Build expand-response-params with last stage like below
         buildPackages = {
           inherit (prevStage) stdenv;
@@ -315,10 +315,10 @@ in
           inherit (prevStage) stdenv;
         };
         cc = prevStage.gcc-unwrapped;
-        bintools = self.binutils;
-        libc = getLibc self;
-        inherit (self) stdenvNoCC coreutils gnugrep;
-        shell = self.bash + "/bin/bash";
+        bintools = final.binutils;
+        libc = getLibc final;
+        inherit (final) stdenvNoCC coreutils gnugrep;
+        shell = final.bash + "/bin/bash";
       };
     };
     extraNativeBuildInputs = [ prevStage.patchelf prevStage.xz ] ++
@@ -393,13 +393,13 @@ in
           ++ lib.optionals (!localSystem.isx86 || localSystem.libc == "musl")
             [ prevStage.updateAutotoolsGnuConfigScriptsHook prevStage.gnu-config ];
 
-      overrides = self: super: {
+      overrides = final: prev: {
         inherit (prevStage)
           gzip bzip2 xz bash coreutils diffutils findutils gawk
           gnumake gnused gnutar gnugrep gnupatch patchelf
           attr acl zlib pcre libunistring libidn2;
         ${localSystem.libc} = getLibc prevStage;
-      } // lib.optionalAttrs (super.stdenv.targetPlatform == localSystem) {
+      } // lib.optionalAttrs (prev.stdenv.targetPlatform == localSystem) {
         # Need to get rid of these when cross-compiling.
         inherit (prevStage) binutils binutils-unwrapped;
         gcc = cc;

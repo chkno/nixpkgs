@@ -9,18 +9,18 @@
 { pkgs
 , stdenv
 , python
-, overrides ? (self: super: {})
+, overrides ? (final: prev: {})
 }:
 
 with pkgs.lib;
 
 let
-  packages = ( self:
+  packages = ( final:
 
 let
   inherit (python.passthru) isPy27 isPy35 isPy36 isPy37 isPy38 isPy39 isPy3k isPyPy pythonAtLeast pythonOlder;
 
-  callPackage = pkgs.newScope self;
+  callPackage = pkgs.newScope final;
 
   namePrefix = python.libPrefix + "-";
 
@@ -38,7 +38,7 @@ let
       })
       else if builtins.isFunction ff then {
         overridePythonAttrs = newArgs: makeOverridablePythonPackage f (overrideWith newArgs);
-        __functor = self: ff;
+        __functor = final: ff;
       }
       else ff;
 
@@ -53,7 +53,7 @@ let
   }));
 
   # See build-setupcfg/default.nix for documentation.
-  buildSetupcfg = import ../build-support/build-setupcfg self;
+  buildSetupcfg = import ../build-support/build-setupcfg final;
 
   fetchPypi = callPackage ../development/interpreters/python/fetchpypi.nix {};
 
@@ -131,7 +131,7 @@ in {
   wrapPython = callPackage ../development/interpreters/python/wrap-python.nix {inherit python; inherit (pkgs) makeSetupHook makeWrapper; };
 
   # Dont take pythonPackages from "global" pkgs scope to avoid mixing python versions
-  pythonPackages = self;
+  pythonPackages = final;
 
   # specials
 
@@ -817,7 +817,7 @@ in {
   glom = callPackage ../development/python-modules/glom { };
 
   gdcm = disabledIf isPy27 (toPythonModule (pkgs.gdcm.override {
-    inherit (self) python;
+    inherit (final) python;
     enablePython = true;
   }));
 
@@ -848,7 +848,7 @@ in {
     hdf5 = pkgs.hdf5;
   };
 
-  h5py-mpi = self.h5py.override {
+  h5py-mpi = final.h5py.override {
     hdf5 = pkgs.hdf5-mpi;
   };
 
@@ -1087,7 +1087,7 @@ in {
   orderedmultidict = callPackage ../development/python-modules/orderedmultidict { };
 
   ortools = (toPythonModule (pkgs.or-tools.override {
-    inherit (self) python;
+    inherit (final) python;
   })).python;
 
   osmnx = callPackage ../development/python-modules/osmnx { };
@@ -1097,7 +1097,7 @@ in {
   outcome = callPackage ../development/python-modules/outcome {};
 
   ovito = toPythonModule (pkgs.libsForQt5.callPackage ../development/python-modules/ovito {
-      pythonPackages = self;
+      pythonPackages = final;
     });
 
   palettable = callPackage ../development/python-modules/palettable { };
@@ -1297,7 +1297,7 @@ in {
     inherit (pkgs) pkgconfig;
   };
 
-  pyGtkGlade = self.pygtk.override {
+  pyGtkGlade = final.pygtk.override {
     libglade = pkgs.gnome2.libglade;
   };
 
@@ -1344,7 +1344,7 @@ in {
   };
 
   pyqt5 = pkgs.libsForQt5.callPackage ../development/python-modules/pyqt/5.x.nix {
-    pythonPackages = self;
+    pythonPackages = final;
   };
 
   /*
@@ -1352,12 +1352,12 @@ in {
     pkgs/development/python-modules/*. Putting this attribute in
     `propagatedBuildInputs` may cause collisions.
   */
-  pyqt5_with_qtwebkit = self.pyqt5.override { withWebKit = true; };
+  pyqt5_with_qtwebkit = final.pyqt5.override { withWebKit = true; };
 
-  pyqt5_with_qtmultimedia = self.pyqt5.override { withMultimedia = true; };
+  pyqt5_with_qtmultimedia = final.pyqt5.override { withMultimedia = true; };
 
   pyqtwebengine = pkgs.libsForQt5.callPackage ../development/python-modules/pyqtwebengine {
-    pythonPackages = self;
+    pythonPackages = final;
   };
 
   pysc2 = callPackage ../development/python-modules/pysc2 { };
@@ -1467,7 +1467,7 @@ in {
   python-hosts = callPackage ../development/python-modules/python-hosts { };
 
   python-lz4 = callPackage ../development/python-modules/python-lz4 { };
-  lz4 = self.python-lz4; # alias 2018-12-05
+  lz4 = final.python-lz4; # alias 2018-12-05
 
   python-ldap-test = callPackage ../development/python-modules/python-ldap-test { };
 
@@ -1630,12 +1630,12 @@ in {
   snapcast = callPackage ../development/python-modules/snapcast { };
 
   soapysdr = toPythonModule (pkgs.soapysdr.override {
-    python = self.python;
+    python = final.python;
     usePython = true;
   });
 
   soapysdr-with-plugins = toPythonModule (pkgs.soapysdr-with-plugins.override {
-    python = self.python;
+    python = final.python;
     usePython = true;
   });
 
@@ -1729,7 +1729,7 @@ in {
 
   pyuavcan = callPackage ../development/python-modules/pyuavcan {
     # this version pinpoint to anold version is necessary due to a regression
-    nunavut = self.nunavut.overridePythonAttrs ( old: rec {
+    nunavut = final.nunavut.overridePythonAttrs ( old: rec {
       version = "0.2.3";
       src = old.src.override {
         inherit version;
@@ -1891,7 +1891,7 @@ in {
 
   appleseed = disabledIf isPy3k
     (toPythonModule (pkgs.appleseed.override {
-      inherit (self) python;
+      inherit (final) python;
     }));
 
   application = callPackage ../development/python-modules/application { };
@@ -2059,9 +2059,9 @@ in {
     matplotlib = null;
   };
 
-  binwalk-full = appendToName "full" (self.binwalk.override {
-    pyqtgraph = self.pyqtgraph;
-    matplotlib = self.matplotlib;
+  binwalk-full = appendToName "full" (final.binwalk.override {
+    pyqtgraph = final.pyqtgraph;
+    matplotlib = final.matplotlib;
   });
 
   bitmath = callPackage ../development/python-modules/bitmath { };
@@ -2081,7 +2081,7 @@ in {
   # Build boost for this specific Python version
   # TODO: use separate output for libboost_python.so
   boost = toPythonModule (pkgs.boost.override {
-    inherit (self) python numpy;
+    inherit (final) python numpy;
     enablePython = true;
   });
 
@@ -2099,7 +2099,7 @@ in {
 
   caffe = toPythonModule (pkgs.caffe.override {
     pythonSupport = true;
-    inherit (self) python numpy boost;
+    inherit (final) python numpy boost;
   });
 
   capstone = callPackage ../development/python-modules/capstone { inherit (pkgs) capstone; };
@@ -2293,8 +2293,8 @@ in {
 
   buildbot = callPackage ../development/python-modules/buildbot { };
   buildbot-plugins = pkgs.recurseIntoAttrs (callPackage ../development/python-modules/buildbot/plugins.nix { });
-  buildbot-ui = self.buildbot.withPlugins (with self.buildbot-plugins; [ www ]);
-  buildbot-full = self.buildbot.withPlugins (with self.buildbot-plugins; [ www console-view waterfall-view grid-view wsgi-dashboards ]);
+  buildbot-ui = final.buildbot.withPlugins (with final.buildbot-plugins; [ www ]);
+  buildbot-full = final.buildbot.withPlugins (with final.buildbot-plugins; [ www console-view waterfall-view grid-view wsgi-dashboards ]);
   buildbot-worker = callPackage ../development/python-modules/buildbot/worker.nix { };
   buildbot-pkg = callPackage ../development/python-modules/buildbot/pkg.nix { };
 
@@ -2304,7 +2304,7 @@ in {
   # A patched version of buildout, useful for buildout based development on Nix
   zc_buildout_nix = callPackage ../development/python-modules/buildout-nix { };
 
-  zc_buildout = self.zc_buildout221;
+  zc_buildout = final.zc_buildout221;
 
   zc_buildout221 = callPackage ../development/python-modules/buildout { };
 
@@ -2506,7 +2506,7 @@ in {
 
   gwyddion = disabledIf isPy3k (toPythonModule (pkgs.gwyddion.override {
     pythonSupport = true;
-    pythonPackages = self;
+    pythonPackages = final;
   }));
 
   impacket = callPackage ../development/python-modules/impacket { };
@@ -2537,17 +2537,17 @@ in {
 
   opencv = disabledIf isPy3k (toPythonModule (pkgs.opencv.override {
     enablePython = true;
-    pythonPackages = self;
+    pythonPackages = final;
   }));
 
   opencv3 = toPythonModule (pkgs.opencv3.override {
     enablePython = true;
-    pythonPackages = self;
+    pythonPackages = final;
   });
 
   opencv4 = toPythonModule (pkgs.opencv4.override {
     enablePython = true;
-    pythonPackages = self;
+    pythonPackages = final;
   });
 
   opentracing = callPackage ../development/python-modules/opentracing { };
@@ -2630,29 +2630,29 @@ in {
 
   pyrealsense2 = toPythonModule (pkgs.librealsense.override {
     enablePython = true;
-    pythonPackages = self;
+    pythonPackages = final;
   });
 
   pyrealsense2WithCuda = toPythonModule (pkgs.librealsenseWithCuda.override {
     enablePython = true;
-    pythonPackages = self;
+    pythonPackages = final;
   });
 
   pyrealsense2WithoutCuda = toPythonModule (pkgs.librealsenseWithoutCuda.override {
     enablePython = true;
-    pythonPackages = self;
+    pythonPackages = final;
   });
 
-  pytest = if isPy3k then self.pytest_5 else self.pytest_4;
+  pytest = if isPy3k then final.pytest_5 else final.pytest_4;
 
   pytest_5 = callPackage ../development/python-modules/pytest {
     # hypothesis tests require pytest that causes dependency cycle
-    hypothesis = self.hypothesis.override { doCheck = false; };
+    hypothesis = final.hypothesis.override { doCheck = false; };
   };
 
   pytest_4 = callPackage ../development/python-modules/pytest/4.nix {
     # hypothesis tests require pytest that causes dependency cycle
-    hypothesis = self.hypothesis.override { doCheck = false; };
+    hypothesis = final.hypothesis.override { doCheck = false; };
   };
 
   pytest-helpers-namespace = callPackage ../development/python-modules/pytest-helpers-namespace { };
@@ -2882,10 +2882,10 @@ in {
   # Actual name of package
   python-dateutil = callPackage ../development/python-modules/dateutil { };
   # Alias that we should deprecate
-  dateutil = self.python-dateutil;
+  dateutil = final.python-dateutil;
 
   debugpy = callPackage ../development/python-modules/debugpy {
-    django = if isPy27 then self.django_1_11 else self.django;
+    django = if isPy27 then final.django_1_11 else final.django;
   };
 
   decorator = callPackage ../development/python-modules/decorator { };
@@ -2913,7 +2913,7 @@ in {
   dnslib = callPackage ../development/python-modules/dnslib { };
 
   dnspython = callPackage ../development/python-modules/dnspython { };
-  dns = self.dnspython; # Alias for compatibility, 2017-12-10
+  dns = final.dnspython; # Alias for compatibility, 2017-12-10
 
   docker = callPackage ../development/python-modules/docker {};
 
@@ -2973,7 +2973,7 @@ in {
 
   eccodes = toPythonModule (pkgs.eccodes.override {
     enablePython = true;
-    pythonPackages = self;
+    pythonPackages = final;
   });
 
   edward = callPackage ../development/python-modules/edward { };
@@ -2982,7 +2982,7 @@ in {
 
   elasticsearch-dsl = callPackage ../development/python-modules/elasticsearch-dsl { };
   # alias
-  elasticsearchdsl = self.elasticsearch-dsl;
+  elasticsearchdsl = final.elasticsearch-dsl;
 
   elementpath = callPackage ../development/python-modules/elementpath { };
 
@@ -3043,7 +3043,7 @@ in {
   fenics = callPackage ../development/libraries/science/math/fenics {
     inherit (pkgs) pkg-config;
     mpi = pkgs.openmpi;
-    pytest = self.pytest_4;
+    pytest = final.pytest_4;
   };
 
   filetype = callPackage ../development/python-modules/filetype { };
@@ -3090,7 +3090,7 @@ in {
 
   # gaia isn't supported with python3 and it's not available from pypi
   gaia = disabledIf (isPyPy || isPy3k) (toPythonModule (pkgs.gaia.override {
-    pythonPackages = self;
+    pythonPackages = final;
     pythonSupport = true;
   }));
 
@@ -3287,11 +3287,11 @@ in {
   libmodulemd = pipe pkgs.libmodulemd [
     toPythonModule
 
-    (p: p.overrideAttrs (super: {
-      meta = super.meta // {
+    (p: p.overrideAttrs (prev: {
+      meta = prev.meta // {
         outputsToInstall = [ "py" ];
         # The package always builds python3 bindings
-        broken = (super.meta.broken or false) || !isPy3k;
+        broken = (prev.meta.broken or false) || !isPy3k;
       };
     }))
 
@@ -3305,10 +3305,10 @@ in {
   libselinux = pipe pkgs.libselinux [
     toPythonModule
 
-    (p: p.overrideAttrs (super: {
-      meta = super.meta // {
+    (p: p.overrideAttrs (prev: {
+      meta = prev.meta // {
         outputsToInstall = [ "py" ];
-        broken = (super.meta.broken or false) || pythonAtLeast "3.8";
+        broken = (prev.meta.broken or false) || pythonAtLeast "3.8";
       };
     }))
 
@@ -3374,7 +3374,7 @@ in {
   measurement = callPackage ../development/python-modules/measurement {};
 
   mercurial = disabledIf (!isPy3k) (toPythonModule (pkgs.mercurial.override {
-    python3Packages = self;
+    python3Packages = final;
   }));
 
   midiutil = callPackage ../development/python-modules/midiutil {};
@@ -3738,12 +3738,12 @@ in {
 
   crayons = callPackage ../development/python-modules/crayons{ };
 
-  django = self.django_lts;
+  django = final.django_lts;
 
-  django_lts = self.django_2_2;
+  django_lts = final.django_2_2;
 
   django_1_11 = callPackage ../development/python-modules/django/1_11.nix {
-    gdal = self.gdal;
+    gdal = final.gdal;
   };
 
   django_2_2 = callPackage ../development/python-modules/django/2_2.nix { };
@@ -3833,7 +3833,7 @@ in {
   django_classytags = callPackage ../development/python-modules/django_classytags { };
 
   # This package may need an older version of Django.
-  # Override the package set and set e.g. `django = super.django_1_9`.
+  # Override the package set and set e.g. `django = prev.django_1_9`.
   # See the Nixpkgs manual for examples on how to override the package set.
   django_hijack = callPackage ../development/python-modules/django-hijack { };
 
@@ -4079,11 +4079,11 @@ in {
     else
       callPackage ../development/python-modules/opt-einsum {};
 
-  pytorchWithCuda = self.pytorch.override {
+  pytorchWithCuda = final.pytorch.override {
     cudaSupport = true;
   };
 
-  pytorchWithoutCuda = self.pytorch.override {
+  pytorchWithoutCuda = final.pytorch.override {
     cudaSupport = false;
   };
 
@@ -4136,13 +4136,13 @@ in {
 
   galario = toPythonModule (pkgs.galario.override {
     enablePython = true;
-    pythonPackages = self;
+    pythonPackages = final;
   });
 
   gcovr = callPackage ../development/python-modules/gcovr { };
 
   gdal = toPythonModule (pkgs.gdal.override {
-    pythonPackages = self;
+    pythonPackages = final;
   });
 
   gdrivefs = callPackage ../development/python-modules/gdrivefs { };
@@ -4308,7 +4308,7 @@ in {
   grib-api = disabledIf (!isPy27) (toPythonModule
     (pkgs.grib-api.override {
       enablePython = true;
-      pythonPackages = self;
+      pythonPackages = final;
     }));
 
   grpcio = callPackage ../development/python-modules/grpcio { };
@@ -4374,7 +4374,7 @@ in {
   hypothesis = if isPy3k then
     callPackage ../development/python-modules/hypothesis { }
   else
-    self.hypothesis_4;
+    final.hypothesis_4;
 
   hydra-check = callPackage ../development/python-modules/hydra-check { };
 
@@ -4496,7 +4496,7 @@ in {
   jmespath = callPackage ../development/python-modules/jmespath { };
 
   journalwatch = callPackage ../tools/system/journalwatch {
-    inherit (self) systemd pytest;
+    inherit (final) systemd pytest;
   };
 
   jq = callPackage ../development/python-modules/jq {
@@ -4615,7 +4615,7 @@ in {
       callPackage ../development/python-modules/libcloud { };
 
   libgpuarray = callPackage ../development/python-modules/libgpuarray {
-    clblas = pkgs.clblas.override { boost = self.boost; };
+    clblas = pkgs.clblas.override { boost = final.boost; };
     cudaSupport = pkgs.config.cudaSupport or false;
     inherit (pkgs.linuxPackages) nvidia_x11;
   };
@@ -4629,14 +4629,14 @@ in {
 
   libredwg = toPythonModule (pkgs.libredwg.override {
     enablePython = true;
-    inherit (self) python libxml2;
+    inherit (final) python libxml2;
   });
 
   librepo = pipe pkgs.librepo [
     toPythonModule
 
-    (p: p.overrideAttrs (super: {
-      meta = super.meta // {
+    (p: p.overrideAttrs (prev: {
+      meta = prev.meta // {
         outputsToInstall = [ "py" ];
       };
     }))
@@ -4659,7 +4659,7 @@ in {
 
   libxml2 = (toPythonModule (pkgs.libxml2.override{pythonSupport=true; inherit python;})).py;
 
-  libxslt = (toPythonModule (pkgs.libxslt.override{pythonSupport=true; inherit python; inherit (self) libxml2;})).py;
+  libxslt = (toPythonModule (pkgs.libxslt.override{pythonSupport=true; inherit python; inherit (final) libxml2;})).py;
 
   limits = callPackage ../development/python-modules/limits { };
 
@@ -4772,13 +4772,13 @@ in {
   matrix-nio = callPackage ../development/python-modules/matrix-nio { };
 
   mautrix = callPackage ../development/python-modules/mautrix { };
-  mautrix-appservice = self.mautrix; # alias 2019-12-28
+  mautrix-appservice = final.mautrix; # alias 2019-12-28
 
   maya = callPackage ../development/python-modules/maya { };
 
   mayavi = pkgs.libsForQt5.callPackage ../development/python-modules/mayavi {
     inherit buildPythonPackage isPy27 fetchPypi;
-    inherit (self) pyface pygments numpy vtk traitsui envisage apptools pyqt5;
+    inherit (final) pyface pygments numpy vtk traitsui envisage apptools pyqt5;
   };
 
   mccabe = callPackage ../development/python-modules/mccabe { };
@@ -4960,7 +4960,7 @@ in {
 
   merkletools = callPackage ../development/python-modules/merkletools { };
 
-  monosat = disabledIf (!isPy3k) (pkgs.monosat.python { inherit buildPythonPackage; inherit (self) cython; });
+  monosat = disabledIf (!isPy3k) (pkgs.monosat.python { inherit buildPythonPackage; inherit (final) cython; });
 
   monotonic = callPackage ../development/python-modules/monotonic { };
 
@@ -5005,7 +5005,7 @@ in {
   nevow = callPackage ../development/python-modules/nevow { };
 
   nghttp2 = (toPythonModule (pkgs.nghttp2.override {
-    inherit (self) python cython setuptools;
+    inherit (final) python cython setuptools;
     inherit (pkgs) ncurses;
     enablePython = true;
   })).python;
@@ -5393,7 +5393,7 @@ in {
 
   soundfile = callPackage ../development/python-modules/soundfile { };
 
-  pysoundfile = self.soundfile;  # Alias added 23-06-2019
+  pysoundfile = final.soundfile;  # Alias added 23-06-2019
 
   python-jenkins = callPackage ../development/python-modules/python-jenkins { };
 
@@ -5467,7 +5467,7 @@ in {
   psycopg2 = callPackage ../development/python-modules/psycopg2 {};
 
   ptpython = callPackage ../development/python-modules/ptpython {
-    prompt_toolkit = self.prompt_toolkit;
+    prompt_toolkit = final.prompt_toolkit;
   };
 
   ptable = callPackage ../development/python-modules/ptable { };
@@ -5696,7 +5696,7 @@ in {
   python_fedora = callPackage ../development/python-modules/python_fedora {};
 
   python-simple-hipchat = callPackage ../development/python-modules/python-simple-hipchat {};
-  python_simple_hipchat = self.python-simple-hipchat;
+  python_simple_hipchat = final.python-simple-hipchat;
 
   scs = callPackage ../development/python-modules/scs { scs = pkgs.scs; };
 
@@ -5872,7 +5872,7 @@ in {
   requests_oauthlib = callPackage ../development/python-modules/requests-oauthlib { };
 
   requests-toolbelt = callPackage ../development/python-modules/requests-toolbelt { };
-  requests_toolbelt = self.requests-toolbelt; # Old attr, 2017-09-26
+  requests_toolbelt = final.requests-toolbelt; # Old attr, 2017-09-26
 
   retry_decorator = callPackage ../development/python-modules/retry_decorator { };
 
@@ -5899,10 +5899,10 @@ in {
   qscintilla-qt4 = callPackage ../development/python-modules/qscintilla { };
 
   qscintilla-qt5 = pkgs.libsForQt5.callPackage ../development/python-modules/qscintilla-qt5 {
-    pythonPackages = self;
+    pythonPackages = final;
   };
 
-  qscintilla = self.qscintilla-qt4;
+  qscintilla = final.qscintilla-qt4;
 
   qserve = callPackage ../development/python-modules/qserve { };
 
@@ -6054,7 +6054,7 @@ in {
   seqdiag = callPackage ../development/python-modules/seqdiag { };
 
   sequoia = disabledIf (isPyPy || !isPy3k) (toPythonModule (pkgs.sequoia.override {
-    pythonPackages = self;
+    pythonPackages = final;
     pythonSupport = true;
   }));
 
@@ -6079,7 +6079,7 @@ in {
     });
   in if pythonOlder "3.5" then scipy_1_2 else scipy_;
 
-  scipy_1_3 = self.scipy.overridePythonAttrs(oldAttrs: rec {
+  scipy_1_3 = final.scipy.overridePythonAttrs(oldAttrs: rec {
     version = "1.3.3";
     src = oldAttrs.src.override {
       inherit version;
@@ -6434,7 +6434,7 @@ in {
 
   magic-wormhole-transit-relay = callPackage ../development/python-modules/magic-wormhole-transit-relay { };
 
-  wxPython = self.wxPython30;
+  wxPython = final.wxPython30;
 
   wxPython30 = callPackage ../development/python-modules/wxPython/3.0.nix {
     wxGTK = pkgs.wxGTK30;
@@ -6585,12 +6585,12 @@ in {
     inherit (pkgs.linuxPackages) nvidia_x11;
   };
 
-  TheanoWithoutCuda = self.Theano.override {
+  TheanoWithoutCuda = final.Theano.override {
     cudaSupport = false;
     cudnnSupport = false;
   };
 
-  TheanoWithCuda = self.Theano.override {
+  TheanoWithCuda = final.Theano.override {
     cudaSupport = true;
     cudnnSupport = true;
   };
@@ -6928,7 +6928,7 @@ in {
 
   tarman = callPackage ../development/python-modules/tarman { };
 
-  libarchive = self.python-libarchive; # The latter is the name upstream uses
+  libarchive = final.python-libarchive; # The latter is the name upstream uses
 
   python-libarchive = callPackage ../development/python-modules/python-libarchive { };
 
@@ -7310,7 +7310,7 @@ in {
 
   zerobin = callPackage ../development/python-modules/zerobin { };
 
-  tensorflow-estimator = self.tensorflow-estimator_1;
+  tensorflow-estimator = final.tensorflow-estimator_1;
 
   tensorflow-estimator_1 = callPackage ../development/python-modules/tensorflow-estimator/1 { };
 
@@ -7318,13 +7318,13 @@ in {
 
   tensorflow-probability = callPackage ../development/python-modules/tensorflow-probability { };
 
-  tensorflow-tensorboard = self.tensorflow-tensorboard_1;
+  tensorflow-tensorboard = final.tensorflow-tensorboard_1;
 
   tensorflow-tensorboard_1 = callPackage ../development/python-modules/tensorflow-tensorboard/1 { };
 
   tensorflow-tensorboard_2 = callPackage ../development/python-modules/tensorflow-tensorboard/2 { };
 
-  tensorflow-bin = self.tensorflow-bin_1;
+  tensorflow-bin = final.tensorflow-bin_1;
 
   tensorflow-bin_1 = callPackage ../development/python-modules/tensorflow/1/bin.nix {
     cudaSupport = pkgs.config.cudaSupport or false;
@@ -7340,7 +7340,7 @@ in {
     cudnn = pkgs.cudnn_cudatoolkit_10;
   };
 
-  tensorflow-build = self.tensorflow-build_1;
+  tensorflow-build = final.tensorflow-build_1;
 
   tensorflow-build_1 = callPackage ../development/python-modules/tensorflow/1 {
     cudaSupport = pkgs.config.cudaSupport or false;
@@ -7362,15 +7362,15 @@ in {
     inherit (pkgs.darwin.apple_sdk.frameworks) Foundation Security;
   };
 
-  tensorflow = self.tensorflow_1;
-  tensorflow_1 = self.tensorflow-build_1;
-  tensorflow_2 = self.tensorflow-build_2;
+  tensorflow = final.tensorflow_1;
+  tensorflow_1 = final.tensorflow-build_1;
+  tensorflow_2 = final.tensorflow-build_2;
 
-  tensorflowWithoutCuda = self.tensorflow.override {
+  tensorflowWithoutCuda = final.tensorflow.override {
     cudaSupport = false;
   };
 
-  tensorflowWithCuda = self.tensorflow.override {
+  tensorflowWithCuda = final.tensorflow.override {
     cudaSupport = true;
   };
 
@@ -7531,7 +7531,7 @@ in {
   visitor = callPackage ../development/python-modules/visitor { };
 
   vtk = toPythonModule (pkgs.vtk_7.override {
-    inherit (self) python;
+    inherit (final) python;
     enablePython = true;
   });
 
@@ -7550,7 +7550,7 @@ in {
   zeep = callPackage ../development/python-modules/zeep { };
 
   zeitgeist = disabledIf isPy3k
-    (toPythonModule (pkgs.zeitgeist.override{python2Packages=self;})).py;
+    (toPythonModule (pkgs.zeitgeist.override{python2Packages=final;})).py;
 
   zeroconf = callPackage ../development/python-modules/zeroconf { };
 

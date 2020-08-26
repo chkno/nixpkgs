@@ -44,7 +44,7 @@ let inherit (localSystem) system; in
       shell = "${bootstrapTools}/bin/bash";
       fetchurlBoot = null;
       cc = null;
-      overrides = self: super: {
+      overrides = final: prev: {
       };
     };
   })

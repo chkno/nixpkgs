@@ -5,9 +5,9 @@
 
 let
   python = python2.override {
-    packageOverrides = self: super: {
+    packageOverrides = final: prev: {
       # Older version, used by syncserver, tokenserver and serversyncstorage
-      cornice = super.cornice.overridePythonAttrs (oldAttrs: rec {
+      cornice = prev.cornice.overridePythonAttrs (oldAttrs: rec {
         version = "0.17";
         src = oldAttrs.src.override {
           inherit version;

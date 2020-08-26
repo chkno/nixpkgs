@@ -1,4 +1,4 @@
-{ pkgs, idris-no-deps, overrides ? (self: super: {}) }: let
+{ pkgs, idris-no-deps, overrides ? (final: prev: {}) }: let
   inherit (pkgs.lib) callPackageWith fix' extends;
 
   /* Taken from haskell-modules/default.nix, should probably abstract this away */
@@ -8,21 +8,21 @@
 
   mkScope = scope : pkgs // pkgs.xorg // pkgs.gnome2 // scope;
 
-  idrisPackages = self: let
-    defaultScope = mkScope self;
+  idrisPackages = final: let
+    defaultScope = mkScope final;
 
     callPackage = callPackageWithScope defaultScope;
 
-    builtins_ = pkgs.lib.mapAttrs self.build-builtin-package {
+    builtins_ = pkgs.lib.mapAttrs final.build-builtin-package {
       prelude = [];
 
-      base = [ self.prelude ];
+      base = [ final.prelude ];
 
-      contrib = [ self.prelude self.base ];
+      contrib = [ final.prelude final.base ];
 
-      effects = [ self.prelude self.base ];
+      effects = [ final.prelude final.base ];
 
-      pruviloj = [ self.prelude self.base ];
+      pruviloj = [ final.prelude final.base ];
     };
 
   in

@@ -7,7 +7,7 @@ let
   ];
 
   python = python3.override {
-    packageOverrides = lib.foldr lib.composeExtensions (self: super: { }) defaultOverrides;
+    packageOverrides = lib.foldr lib.composeExtensions (final: prev: { }) defaultOverrides;
   };
 in python.pkgs.buildPythonPackage rec {
   name = "${pname}-${version}";

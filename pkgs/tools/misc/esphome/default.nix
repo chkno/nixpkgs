@@ -2,8 +2,8 @@
 
 let
   python = python3.override {
-    packageOverrides = self: super: {
-      protobuf = super.protobuf.override {
+    packageOverrides = final: prev: {
+      protobuf = prev.protobuf.override {
         protobuf = protobuf3_11;
       };
     };
@@ -46,7 +46,7 @@ in python.pkgs.buildPythonApplication rec {
   '';
 
   meta = with lib; {
-    description = "Make creating custom firmwares for ESP32/ESP8266 super easy";
+    description = "Make creating custom firmwares for ESP32/ESP8266 prev easy";
     homepage = "https://esphome.io/";
     license = licenses.mit;
     maintainers = with maintainers; [ dotlambda globin ];

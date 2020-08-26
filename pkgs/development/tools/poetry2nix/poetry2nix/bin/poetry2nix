@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
         lines = [
             "{ pkgs }:",
-            "self: super: {",
+            "final: prev: {",
         ]
 
         for f in futures:
@@ -79,7 +79,7 @@ if __name__ == "__main__":
                 indent(
                     textwrap.dedent(
                         """
-              %s = super.%s.overridePythonAttrs (
+              %s = prev.%s.overridePythonAttrs (
                 _: {
                   src = pkgs.fetchgit {
                     url = "%s";

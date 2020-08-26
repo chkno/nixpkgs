@@ -9,20 +9,20 @@ let
   fetchNodeModules = callPackage ./fetchNodeModules.nix { };
 
   python = python37.override {
-    packageOverrides = self: super: {
-      srht = self.callPackage ./core.nix { inherit fetchNodeModules; };
+    packageOverrides = final: prev: {
+      srht = final.callPackage ./core.nix { inherit fetchNodeModules; };
 
-      buildsrht = self.callPackage ./builds.nix { };
-      dispatchsrht = self.callPackage ./dispatch.nix { };
-      gitsrht = self.callPackage ./git.nix { };
-      hgsrht = self.callPackage ./hg.nix { };
-      listssrht = self.callPackage ./lists.nix { };
-      mansrht = self.callPackage ./man.nix { };
-      metasrht = self.callPackage ./meta.nix { };
-      pastesrht = self.callPackage ./paste.nix { };
-      todosrht = self.callPackage ./todo.nix { };
+      buildsrht = final.callPackage ./builds.nix { };
+      dispatchsrht = final.callPackage ./dispatch.nix { };
+      gitsrht = final.callPackage ./git.nix { };
+      hgsrht = final.callPackage ./hg.nix { };
+      listssrht = final.callPackage ./lists.nix { };
+      mansrht = final.callPackage ./man.nix { };
+      metasrht = final.callPackage ./meta.nix { };
+      pastesrht = final.callPackage ./paste.nix { };
+      todosrht = final.callPackage ./todo.nix { };
 
-      scmsrht = self.callPackage ./scm.nix { };
+      scmsrht = final.callPackage ./scm.nix { };
     };
   };
 in with python.pkgs; recurseIntoAttrs {

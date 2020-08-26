@@ -211,9 +211,9 @@ This function allows users to define their own development environment by means
 of an override. After adding the following snippet to `~/.config/nixpkgs/config.nix`,
 ```nix
 {
-  packageOverrides = super: let self = super.pkgs; in
+  packageOverrides = prev: let final = prev.pkgs; in
   {
-    myHaskellEnv = self.haskell.packages.ghc7102.ghcWithPackages
+    myHaskellEnv = final.haskell.packages.ghc7102.ghcWithPackages
                      (haskellPackages: with haskellPackages; [
                        # libraries
                        arrows async cgi criterion
@@ -298,9 +298,9 @@ long and scary.
 For example, installing the following environment
 ```nix
 {
-  packageOverrides = super: let self = super.pkgs; in
+  packageOverrides = prev: let final = prev.pkgs; in
   {
-    myHaskellEnv = self.haskellPackages.ghcWithHoogle
+    myHaskellEnv = final.haskellPackages.ghcWithHoogle
                      (haskellPackages: with haskellPackages; [
                        # libraries
                        arrows async cgi criterion
@@ -571,12 +571,12 @@ Then edit your `~/.config/nixpkgs/config.nix` file to register those builds in t
 default Haskell package set:
 ```nix
 {
-  packageOverrides = super: let self = super.pkgs; in
+  packageOverrides = prev: let final = prev.pkgs; in
   {
-    haskellPackages = super.haskellPackages.override {
-      overrides = self: super: {
-        foo = self.callPackage ../src/foo {};
-        bar = self.callPackage ../src/bar {};
+    haskellPackages = prev.haskellPackages.override {
+      overrides = final: prev: {
+        foo = final.callPackage ../src/foo {};
+        bar = final.callPackage ../src/bar {};
       };
     };
   };
@@ -603,11 +603,11 @@ library profiling for all packages. To accomplish that add the following
 snippet to your `~/.config/nixpkgs/config.nix` file:
 ```nix
 {
-  packageOverrides = super: let self = super.pkgs; in
+  packageOverrides = prev: let final = prev.pkgs; in
   {
-    profiledHaskellPackages = self.haskellPackages.override {
-      overrides = self: super: {
-        mkDerivation = args: super.mkDerivation (args // {
+    profiledHaskellPackages = final.haskellPackages.override {
+      overrides = final: prev: {
+        mkDerivation = args: prev.mkDerivation (args // {
           enableLibraryProfiling = true;
         });
       };
@@ -632,13 +632,13 @@ cabal2nix cabal://ghc-events-0.4.3.0 > ~/.nixpkgs/ghc-events-0.4.3.0.nix
 Then add the override in `~/.config/nixpkgs/config.nix`:
 ```nix
 {
-  packageOverrides = super: let self = super.pkgs; in
+  packageOverrides = prev: let final = prev.pkgs; in
   {
-    haskell = super.haskell // {
-      packages = super.haskell.packages // {
-        ghc784 = super.haskell.packages.ghc784.override {
-          overrides = self: super: {
-            ghc-events = self.callPackage ./ghc-events-0.4.3.0.nix {};
+    haskell = prev.haskell // {
+      packages = prev.haskell.packages // {
+        ghc784 = prev.haskell.packages.ghc784.override {
+          overrides = final: prev: {
+            ghc-events = final.callPackage ./ghc-events-0.4.3.0.nix {};
           };
         };
       };
@@ -652,9 +652,9 @@ version
 ```nix
 { # ...
 
-  haskell.packages.ghc784 = super.haskell.packages.ghc784.override {
-    overrides = self: super: {
-      ghc-events = self.callPackage ./ghc-events-0.4.3.0.nix {};
+  haskell.packages.ghc784 = prev.haskell.packages.ghc784.override {
+    overrides = final: prev: {
+      ghc-events = final.callPackage ./ghc-events-0.4.3.0.nix {};
     };
   };
 }
@@ -698,18 +698,18 @@ all the compiler-specific package sets. For example:
 
 ```nix
 {
-  packageOverrides = super: let self = super.pkgs; in
+  packageOverrides = prev: let final = prev.pkgs; in
   {
-    haskell = super.haskell // {
-      packages = super.haskell.packages // {
-        ghc784 = super.haskell.packages.ghc784.override {
-          overrides = self: super: {
+    haskell = prev.haskell // {
+      packages = prev.haskell.packages // {
+        ghc784 = prev.haskell.packages.ghc784.override {
+          overrides = final: prev: {
             my-package = ...;
             my-other-package = ...;
           };
         };
-        ghc822 = super.haskell.packages.ghc784.override {
-          overrides = self: super: {
+        ghc822 = prev.haskell.packages.ghc784.override {
+          overrides = final: prev: {
             my-package = ...;
             my-other-package = ...;
           };
@@ -726,10 +726,10 @@ sets at once:
 
 ```nix
 {
-  packageOverrides = super: let self = super.pkgs; in
+  packageOverrides = prev: let final = prev.pkgs; in
   {
-    haskell = super.haskell // {
-      packageOverrides = self: super: {
+    haskell = prev.haskell // {
+      packageOverrides = final: prev: {
         my-package = ...;
         my-other-package = ...;
       };

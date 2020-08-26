@@ -78,7 +78,7 @@ let
   # A function that builds a "native" stdenv (one that uses tools in
   # /usr etc.).
   makeStdenv =
-    { cc, fetchurl, extraPath ? [], overrides ? (self: super: { }) }:
+    { cc, fetchurl, extraPath ? [], overrides ? (final: prev: { }) }:
 
     import ../generic {
       buildPlatform = localSystem;
@@ -162,7 +162,7 @@ in
     stdenv = makeStdenv {
       inherit (prevStage.stdenv) cc fetchurl;
       extraPath = [ prevStage.xz ];
-      overrides = self: super: { inherit (prevStage) xz; };
+      overrides = final: prev: { inherit (prevStage) xz; };
     };
   })
 

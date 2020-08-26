@@ -9,8 +9,8 @@ let
     in args // { inherit version branch; };
   extraArgs = rec {
     mkOverride = attrname: version: sha256:
-      self: super: {
-        ${attrname} = super.${attrname}.overridePythonAttrs (oldAttrs: {
+      final: prev: {
+        ${attrname} = prev.${attrname}.overridePythonAttrs (oldAttrs: {
           inherit version;
           src = oldAttrs.src.override {
             inherit version sha256;

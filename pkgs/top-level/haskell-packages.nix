@@ -26,8 +26,8 @@ let
     overrides = pkgs.haskell.packageOverrides;
   };
 
-  bootstrapPackageSet = self: super: {
-    mkDerivation = drv: super.mkDerivation (drv // {
+  bootstrapPackageSet = final: prev: {
+    mkDerivation = drv: prev.mkDerivation (drv // {
       doCheck = false;
       doHaddock = false;
       enableExecutableProfiling = false;
@@ -122,7 +122,7 @@ in {
   };
 
   # Default overrides that are applied to all package sets.
-  packageOverrides = self : super : {};
+  packageOverrides = final : prev : {};
 
   # Always get compilers from `buildPackages`
   packages = let bh = buildPackages.haskell; in {

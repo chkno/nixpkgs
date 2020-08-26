@@ -4,8 +4,8 @@
 }:
 let
   py = python.override {
-    packageOverrides = self: super: {
-      pyproj = super.pyproj.overridePythonAttrs (oldAttrs: rec {
+    packageOverrides = final: prev: {
+      pyproj = prev.pyproj.overridePythonAttrs (oldAttrs: rec {
       version = "1.9.6";
       src = pkgs.fetchFromGitHub {
         owner = "pyproj4";

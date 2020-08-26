@@ -1,63 +1,63 @@
-self: super: {
+final: prev: {
 
-    periods = super.callPackage ./ext/periods.nix { };
+    periods = prev.callPackage ./ext/periods.nix { };
 
-    postgis = super.callPackage ./ext/postgis.nix {
-        gdal = self.gdal.override {
-            postgresql = self.postgresql;
-            poppler = self.poppler_0_61;
+    postgis = prev.callPackage ./ext/postgis.nix {
+        gdal = final.gdal.override {
+            postgresql = final.postgresql;
+            poppler = final.poppler_0_61;
         };
     };
 
-    pg_auto_failover = super.callPackage ./ext/pg_auto_failover.nix { };
+    pg_auto_failover = prev.callPackage ./ext/pg_auto_failover.nix { };
 
-    pg_bigm = super.callPackage ./ext/pg_bigm.nix { };
+    pg_bigm = prev.callPackage ./ext/pg_bigm.nix { };
 
-    pg_ed25519 = super.callPackage ./ext/pg_ed25519.nix { };
+    pg_ed25519 = prev.callPackage ./ext/pg_ed25519.nix { };
 
-    pg_repack = super.callPackage ./ext/pg_repack.nix { };
+    pg_repack = prev.callPackage ./ext/pg_repack.nix { };
 
-    pg_similarity = super.callPackage ./ext/pg_similarity.nix { };
+    pg_similarity = prev.callPackage ./ext/pg_similarity.nix { };
 
-    pgroonga = super.callPackage ./ext/pgroonga.nix { };
+    pgroonga = prev.callPackage ./ext/pgroonga.nix { };
 
-    plpgsql_check = super.callPackage ./ext/plpgsql_check.nix { };
+    plpgsql_check = prev.callPackage ./ext/plpgsql_check.nix { };
 
-    plv8 = super.callPackage ./ext/plv8.nix {
-        v8 = super.callPackage ../../../development/libraries/v8/plv8_6_x.nix {
-            python = self.python2;
+    plv8 = prev.callPackage ./ext/plv8.nix {
+        v8 = prev.callPackage ../../../development/libraries/v8/plv8_6_x.nix {
+            python = final.python2;
         };
     };
 
-    pgjwt = super.callPackage ./ext/pgjwt.nix { };
+    pgjwt = prev.callPackage ./ext/pgjwt.nix { };
 
-    cstore_fdw = super.callPackage ./ext/cstore_fdw.nix { };
+    cstore_fdw = prev.callPackage ./ext/cstore_fdw.nix { };
 
-    pg_hll = super.callPackage ./ext/pg_hll.nix { };
+    pg_hll = prev.callPackage ./ext/pg_hll.nix { };
 
-    pg_cron = super.callPackage ./ext/pg_cron.nix { };
+    pg_cron = prev.callPackage ./ext/pg_cron.nix { };
 
-    pg_topn = super.callPackage ./ext/pg_topn.nix { };
+    pg_topn = prev.callPackage ./ext/pg_topn.nix { };
 
-    pgtap = super.callPackage ./ext/pgtap.nix { };
+    pgtap = prev.callPackage ./ext/pgtap.nix { };
 
-    pipelinedb = super.callPackage ./ext/pipelinedb.nix { };
+    pipelinedb = prev.callPackage ./ext/pipelinedb.nix { };
 
-    smlar = super.callPackage ./ext/smlar.nix { };
+    smlar = prev.callPackage ./ext/smlar.nix { };
 
-    temporal_tables = super.callPackage ./ext/temporal_tables.nix { };
+    temporal_tables = prev.callPackage ./ext/temporal_tables.nix { };
 
-    timescaledb = super.callPackage ./ext/timescaledb.nix { };
+    timescaledb = prev.callPackage ./ext/timescaledb.nix { };
 
-    tsearch_extras = super.callPackage ./ext/tsearch_extras.nix { };
+    tsearch_extras = prev.callPackage ./ext/tsearch_extras.nix { };
 
-    tds_fdw = super.callPackage ./ext/tds_fdw.nix { };
+    tds_fdw = prev.callPackage ./ext/tds_fdw.nix { };
 
-    pgrouting = super.callPackage ./ext/pgrouting.nix { };
+    pgrouting = prev.callPackage ./ext/pgrouting.nix { };
 
-    pg_partman = super.callPackage ./ext/pg_partman.nix { };
+    pg_partman = prev.callPackage ./ext/pg_partman.nix { };
 
-    pg_safeupdate = super.callPackage ./ext/pg_safeupdate.nix { };
+    pg_safeupdate = prev.callPackage ./ext/pg_safeupdate.nix { };
 
-    repmgr = super.callPackage ./ext/repmgr.nix { };
+    repmgr = prev.callPackage ./ext/repmgr.nix { };
 }

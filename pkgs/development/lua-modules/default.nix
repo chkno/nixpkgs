@@ -1,7 +1,7 @@
 # inspired by pkgs/development/haskell-modules/default.nix
 { pkgs, lib
 , lua
-, overrides ? (self: super: {})
+, overrides ? (final: prev: {})
 }:
 
 let
@@ -15,9 +15,9 @@ let
   overridenPackages = import ./overrides.nix { inherit pkgs; };
 
   generatedPackages = if (builtins.pathExists ./generated-packages.nix) then
-        pkgs.callPackage ./generated-packages.nix { } else (self: super: {});
+        pkgs.callPackage ./generated-packages.nix { } else (final: prev: {});
 
-  extensible-self = lib.makeExtensible
+  extensible-final = lib.makeExtensible
     (extends overrides
         (extends overridenPackages
           (extends generatedPackages
@@ -27,4 +27,4 @@ let
     )
           ;
 in
-  extensible-self
+  extensible-final

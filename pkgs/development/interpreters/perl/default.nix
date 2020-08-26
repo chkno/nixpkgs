@@ -114,7 +114,7 @@ let
       libPrefix = "lib/perl5/site_perl";
       pkgs = callPackage ../../../top-level/perl-packages.nix {
         inherit perl buildPerl;
-        overrides = config.perlPackageOverrides or (p: {}); # TODO: (self: super: {}) like in python
+        overrides = config.perlPackageOverrides or (p: {}); # TODO: (final: prev: {}) like in python
       };
       buildEnv = callPackage ./wrapper.nix {
         inherit perl;

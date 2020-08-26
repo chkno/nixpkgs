@@ -6,8 +6,8 @@ let
   defaultOverrides = commonOverrides ++ [
     (mkOverride "aiofiles" "0.5.0"
       "98e6bcfd1b50f97db4980e182ddd509b7cc35909e903a8fe50d8849e02d815af")
-    (self: super: {
-      py-cpuinfo = super.py-cpuinfo.overridePythonAttrs (oldAttrs: rec {
+    (final: prev: {
+      py-cpuinfo = prev.py-cpuinfo.overridePythonAttrs (oldAttrs: rec {
         version = "7.0.0";
         src = fetchFromGitHub {
            owner = "workhorsy";
@@ -20,7 +20,7 @@ let
   ];
 
   python = python3.override {
-    packageOverrides = lib.foldr lib.composeExtensions (self: super: { }) defaultOverrides;
+    packageOverrides = lib.foldr lib.composeExtensions (final: prev: { }) defaultOverrides;
   };
 in python.pkgs.buildPythonPackage {
   pname = "gns3-server";

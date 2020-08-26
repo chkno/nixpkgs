@@ -6,8 +6,8 @@
 , version
 , extraMeta ? {}
 , callPackage
-, self
-, packageOverrides ? (self: super: {})
+, final
+, packageOverrides ? (final: prev: {})
 , enableFFI ? true
 , enableJIT ? true
 , enableJITDebugModule ? enableJIT
@@ -24,7 +24,7 @@ assert enableJITDebugModule -> enableJIT;
 assert enableGDBJITSupport -> enableJIT;
 assert enableValgrindSupport -> valgrind != null;
 let
-  luaPackages = callPackage ../../lua-modules {lua=self; overrides=packageOverrides;};
+  luaPackages = callPackage ../../lua-modules {lua=final; overrides=packageOverrides;};
 
   XCFLAGS = with stdenv.lib;
      optional (!enableFFI) "-DLUAJIT_DISABLE_FFI"
@@ -91,12 +91,12 @@ stdenv.mkDerivation rec {
 
   passthru = rec {
     buildEnv = callPackage ../lua-5/wrapper.nix {
-      lua = self;
+      lua = final;
       inherit (luaPackages) requiredLuaModules;
     };
     withPackages = import ../lua-5/with-packages.nix { inherit buildEnv luaPackages;};
     pkgs = luaPackages;
-    interpreter = "${self}/bin/lua";
+    interpreter = "${final}/bin/lua";
   };
 
   meta = with stdenv.lib; {

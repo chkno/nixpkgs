@@ -2,8 +2,8 @@
 let
 
   localPython = python3.override {
-    packageOverrides = self: super: {
-      cement = super.cement.overridePythonAttrs (oldAttrs: rec {
+    packageOverrides = final: prev: {
+      cement = prev.cement.overridePythonAttrs (oldAttrs: rec {
         version = "2.8.2";
         src = oldAttrs.src.override {
           inherit version;
@@ -11,7 +11,7 @@ let
         };
       });
 
-      colorama = super.colorama.overridePythonAttrs (oldAttrs: rec {
+      colorama = prev.colorama.overridePythonAttrs (oldAttrs: rec {
         version = "0.3.7";
         src = oldAttrs.src.override {
           inherit version;
@@ -19,7 +19,7 @@ let
         };
       });
 
-      pathspec = super.pathspec.overridePythonAttrs (oldAttrs: rec {
+      pathspec = prev.pathspec.overridePythonAttrs (oldAttrs: rec {
         name = "${oldAttrs.pname}-${version}";
         version = "0.5.5";
         src = oldAttrs.src.override {
@@ -28,7 +28,7 @@ let
         };
       });
 
-      requests = super.requests.overridePythonAttrs (oldAttrs: rec {
+      requests = prev.requests.overridePythonAttrs (oldAttrs: rec {
         version = "2.9.1";
         src = oldAttrs.src.override {
           inherit version;
@@ -36,7 +36,7 @@ let
         };
       });
 
-      semantic-version = super.semantic-version.overridePythonAttrs (oldAttrs: rec {
+      semantic-version = prev.semantic-version.overridePythonAttrs (oldAttrs: rec {
         version = "2.5.0";
         src = oldAttrs.src.override {
           inherit version;
@@ -44,7 +44,7 @@ let
         };
       });
 
-      tabulate = super.tabulate.overridePythonAttrs (oldAttrs: rec {
+      tabulate = prev.tabulate.overridePythonAttrs (oldAttrs: rec {
         version = "0.7.5";
         src = oldAttrs.src.override {
           inherit version;

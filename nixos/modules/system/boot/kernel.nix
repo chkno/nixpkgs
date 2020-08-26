@@ -37,11 +37,11 @@ in
     boot.kernelPackages = mkOption {
       default = pkgs.linuxPackages;
       type = types.unspecified // { merge = mergeEqualOption; };
-      apply = kernelPackages: kernelPackages.extend (self: super: {
-        kernel = super.kernel.override {
+      apply = kernelPackages: kernelPackages.extend (final: prev: {
+        kernel = prev.kernel.override {
           inherit randstructSeed;
-          kernelPatches = super.kernel.kernelPatches ++ kernelPatches;
-          features = lib.recursiveUpdate super.kernel.features features;
+          kernelPatches = prev.kernel.kernelPatches ++ kernelPatches;
+          features = lib.recursiveUpdate prev.kernel.features features;
         };
       });
       # We don't want to evaluate all of linuxPackages for the manual

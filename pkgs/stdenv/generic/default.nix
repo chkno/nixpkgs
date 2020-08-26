@@ -10,7 +10,7 @@ let lib = import ../../../lib; in lib.makeOverridable (
   hasCC ? cc != null, cc
 
 , shell
-, allowedRequisites ? null, extraAttrs ? {}, overrides ? (self: super: {}), config
+, allowedRequisites ? null, extraAttrs ? {}, overrides ? (final: prev: {}), config
 
 , # The `fetchurl' to use for downloading curl and its dependencies
   # (see all-packages.nix).

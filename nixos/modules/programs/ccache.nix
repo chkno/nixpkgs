@@ -50,10 +50,10 @@ in {
     # target configuration
     (mkIf (cfg.packageNames != []) {
       nixpkgs.overlays = [
-        (self: super: genAttrs cfg.packageNames (pn: super.${pn}.override { stdenv = builtins.trace "with ccache: ${pn}" self.ccacheStdenv; }))
+        (final: prev: genAttrs cfg.packageNames (pn: prev.${pn}.override { stdenv = builtins.trace "with ccache: ${pn}" final.ccacheStdenv; }))
 
-        (self: super: {
-          ccacheWrapper = super.ccacheWrapper.override {
+        (final: prev: {
+          ccacheWrapper = prev.ccacheWrapper.override {
             extraConfig = ''
               export CCACHE_COMPRESS=1
               export CCACHE_DIR="${cfg.cacheDir}"
