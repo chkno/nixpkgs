@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, cmake, postgresql, openssl }:
+{ config, stdenv, fetchFromGitHub, cmake, postgresql, openssl }:
 
 # # To enable on NixOS:
 # config.services.postgresql = {
@@ -20,7 +20,9 @@ stdenv.mkDerivation rec {
     sha256 = "0w0sl5izwic3j1k94xhky2y4wkd8l18m5hcknj5vqxq3ryhxaszc";
   };
 
-  cmakeFlags = [ "-DSEND_TELEMETRY_DEFAULT=OFF" "-DREGRESS_CHECKS=OFF" ];
+  cmakeFlags = [ "-DSEND_TELEMETRY_DEFAULT=OFF" "-DREGRESS_CHECKS=OFF" ]
+    ++ stdenv.lib.optional (config.timescaledb.apache-only or false)
+    [ "-DAPACHE_ONLY=1" ];
 
   # Fix the install phase which tries to install into the pgsql extension dir,
   # and cannot be manually overridden. This is rather fragile but works OK.
@@ -41,6 +43,9 @@ stdenv.mkDerivation rec {
     homepage    = "https://www.timescale.com/";
     maintainers = with maintainers; [ volth marsam ];
     platforms   = postgresql.meta.platforms;
-    license     = licenses.asl20;
+    license = if config.timescaledb.apache-only or false then
+      licenses.asl20
+    else
+      licenses.unfree;
   };
 }

@@ -1,4 +1,4 @@
-{ system ? builtins.currentSystem, config ? { }
+{ system ? builtins.currentSystem, config ? { timescaledb.apache-only = true; }
 , pkgs ? import ../.. { inherit system config; } }:
 
 with import ../lib/testing-python.nix { inherit system pkgs; };
