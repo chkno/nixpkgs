@@ -21,7 +21,7 @@ stdenv.mkDerivation rec {
   };
 
   cmakeFlags = [ "-DSEND_TELEMETRY_DEFAULT=OFF" "-DREGRESS_CHECKS=OFF" ]
-    ++ stdenv.lib.optional (config.timescaledb.apache-only or false)
+    ++ stdenv.lib.optional (config.timescaledb.apache-only or true)
     [ "-DAPACHE_ONLY=1" ];
 
   # Fix the install phase which tries to install into the pgsql extension dir,
@@ -43,7 +43,7 @@ stdenv.mkDerivation rec {
     homepage    = "https://www.timescale.com/";
     maintainers = with maintainers; [ volth marsam ];
     platforms   = postgresql.meta.platforms;
-    license = if config.timescaledb.apache-only or false then
+    license = if config.timescaledb.apache-only or true then
       licenses.asl20
     else
       licenses.unfree;
