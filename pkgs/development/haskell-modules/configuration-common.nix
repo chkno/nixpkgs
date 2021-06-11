@@ -1416,6 +1416,16 @@ self: super: {
       ] ++ (drv.patches or []);
     }));
 
+  nixpkgs-update = let deps = with pkgs; [ git nix hub tree gist ];
+  in overrideCabal super.nixpkgs-update (drv: {
+    buildTools = (drv.buildTools or [ ]) ++ [ pkgs.makeWrapper ];
+    postInstall = (drv.postInstall or "") + ''
+      wrapProgram "$out/bin/nixpkgs-update" --suffix PATH : ${
+        pkgs.lib.escapeShellArg (pkgs.lib.makeBinPath deps)
+      }
+    '';
+  });
+
   # Our quickcheck-instances is too old for the newer binary-instances, but
   # quickcheck-instances is only used in the tests of binary-instances.
   binary-instances = dontCheck super.binary-instances;
